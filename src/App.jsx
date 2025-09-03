@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Debugger from "./components/Debugger";
+import ChangePassword from "./pages/Auth/ChangePassword"; // 1. Import the new page
+
 // Layouts
 import AdminLayout from "./layouts/AdminLayout";
 import ManagerLayout from "./layouts/ManagerLayout";
@@ -61,6 +62,14 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+           <Route 
+            path="/change-password" 
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            } 
+          />
           <Route
             path="/*"
             element={
