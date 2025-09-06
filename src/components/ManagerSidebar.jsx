@@ -11,6 +11,7 @@ const ManagerSidebar = () => {
       </div>
       <nav className="flex-1 p-4 space-y-2">
         <NavLink to="/dashboard" className={({ isActive }) => isActive ? `${linkStyle} ${activeLinkStyle}` : linkStyle}>Dashboard</NavLink>
+        <NavLink to="/inbox" className={({ isActive }) => isActive ? `${linkStyle} ${activeLinkStyle}` : linkStyle}>Inbox</NavLink>
         <NavLink to="/products" className={({ isActive }) => isActive ? `${linkStyle} ${activeLinkStyle}` : linkStyle}>Products</NavLink>
         <NavLink to="/stocks" className={({ isActive }) => isActive ? `${linkStyle} ${activeLinkStyle}` : linkStyle}>Stocks</NavLink>
       </nav>

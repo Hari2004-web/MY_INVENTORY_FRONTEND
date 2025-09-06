@@ -2,69 +2,69 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getProducts } from "../api/productApi";
 import { getStocks } from "../api/stockApi";
-import { getUsers } from "../api/userApi";
-
-const StatCard = ({ title, value, icon, color }) => (
-  <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out">
-    <div className="flex items-center">
-      <div className={`p-3 rounded-full ${color}`}>{icon}</div>
-      <div className="ml-4">
-        <p className="text-sm font-medium text-gray-500">{title}</p>
-        <p className="text-2xl font-bold text-gray-800">{value}</p>
-      </div>
-    </div>
-  </div>
-);
-
-const ProductIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>;
-const StockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>;
-const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H9a4 4 0 01-4-4V5a4 4 0 014-4h6a4 4 0 014 4v12a4 4 0 01-4 4z" /></svg>;
+import StockBarChart from "../components/charts/StockBarChart";
+import ProductPieChart from "../components/charts/ProductPieChart";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ productCount: 0, stockCount: 0, managerCount: 0 });
+  const [products, setProducts] = useState([]);
+  const [stocks, setStocks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
+        setLoading(true);
         const productRes = await getProducts();
-        const stockRes = await getStocks();
+        setProducts(productRes.data || []);
         
-        let managerCount = 0;
-        if (user.role === 'admin') {
-          const userRes = await getUsers();
-          managerCount = userRes.data.filter(u => u.role === 'manager').length;
-        }
-
-        setStats({
-          productCount: productRes.data?.length || 0,
-          stockCount: stockRes.data?.length || 0,
-          managerCount: managerCount,
-        });
+        const stockRes = await getStocks();
+        setStocks(stockRes.data || []);
       } catch (error) {
-        console.error("Failed to fetch dashboard stats", error);
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchStats();
-  }, [user.role]);
+    fetchData();
+  }, []);
 
   return (
-    <div>
-      <div className="mb-8">
+    <div className="space-y-6">
+      <div>
         <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
         <p className="text-gray-600 mt-1">
-          Welcome back, {user?.username || 'User'}!
+          Welcome back, {user?.username || 'User'}! Here's your graphical overview.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard title="Total Products" value={stats.productCount} icon={<ProductIcon />} color="bg-blue-500" />
-        <StatCard title="Items in Stock" value={stats.stockCount} icon={<StockIcon />} color="bg-green-500" />
-        {user.role === 'admin' && (
-          <StatCard title="Active Managers" value={stats.managerCount} icon={<UserIcon />} color="bg-indigo-500" />
-        )}
-      </div>
+      {loading ? (
+        <p>Loading charts...</p>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            {stocks.length > 0 ? (
+              <StockBarChart stockData={stocks} />
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold text-gray-700">No Stock Data</h3>
+                <p className="text-sm text-gray-500">Add stock to see the chart.</p>
+              </div>
+            )}
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            {products.length > 0 ? (
+              <ProductPieChart productData={products} />
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold text-gray-700">No Product Data</h3>
+                <p className="text-sm text-gray-500">Add products to see the chart.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

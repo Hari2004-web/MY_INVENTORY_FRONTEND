@@ -24,3 +24,8 @@ export const changePassword = async (passwordData) => {
   const { data } = await API.post("/users/change-password", passwordData);
   return data;
 };
+export const sendMessage = async (messageData) => {
+  // The token is automatically added by the fetchWrapper
+  const { data } = await API.post("/users/send-message", messageData);
+  return data;
+};

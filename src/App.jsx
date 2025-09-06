@@ -1,26 +1,21 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import ChangePassword from "./pages/Auth/ChangePassword"; // 1. Import the new page
-
-// Layouts
 import AdminLayout from "./layouts/AdminLayout";
 import ManagerLayout from "./layouts/ManagerLayout";
-
-// Pages
 import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/register";
+import Register from "./pages/Auth/Register";
+import ChangePassword from "./pages/Auth/ChangePassword";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Stocks from "./pages/Stocks";
 import Managers from "./pages/Managers";
+import Inbox from "./pages/Inbox"; // Ensure Inbox is imported
 
-// Checks if a user is logged in
-const ProtectedRoute = ({ children }) => {  
+const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
 };
 
-// This component renders the correct UI based on the user's role
 const RoleBasedLayout = () => {
   const { user } = useAuth();
 
@@ -32,6 +27,8 @@ const RoleBasedLayout = () => {
           <Route path="/products" element={<Products />} />
           <Route path="/stocks" element={<Stocks />} />
           <Route path="/managers" element={<Managers />} />
+          {/* FIX: Add the Inbox route for the admin as well */}
+          <Route path="/inbox" element={<Inbox />} />
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </AdminLayout>
@@ -43,6 +40,7 @@ const RoleBasedLayout = () => {
       <ManagerLayout>
         <Routes>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/inbox" element={<Inbox />} />
           <Route path="/products" element={<Products />} />
           <Route path="/stocks" element={<Stocks />} />
           <Route path="*" element={<Navigate to="/dashboard" />} />
@@ -50,9 +48,7 @@ const RoleBasedLayout = () => {
       </ManagerLayout>
     );
   }
-
-  // A fallback while the user object is loading
-  return <div>Loading user role...</div>;
+  return <div>Loading...</div>;
 };
 
 function App() {
@@ -60,23 +56,17 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* ... Public Routes ... */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-           <Route 
+          <Route 
             path="/change-password" 
-            element={
-              <ProtectedRoute>
-                <ChangePassword />
-              </ProtectedRoute>
-            } 
+            element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} 
           />
+          {/* Protected Routes */}
           <Route
             path="/*"
-            element={
-              <ProtectedRoute>
-                <RoleBasedLayout />
-              </ProtectedRoute>
-            }
+            element={<ProtectedRoute><RoleBasedLayout /></ProtectedRoute>}
           />
         </Routes>
       </Router>
