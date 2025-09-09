@@ -8,11 +8,9 @@ const API = axios.create({
 export const registerApi = async (userData) => {
   try {
     const res = await API.post("/register", userData);
-    return res.data; // On success, returns { success: true, message: '...' }
+    return res.data;
   } catch (err) {
-    // On failure, ensure a clear error message is available
-    const errorMessage = err.response?.data?.error || err.response?.data?.message || "An unexpected registration error occurred.";
-    throw new Error(errorMessage);
+    throw err.response?.data || { message: "Registration failed" };
   }
 };
 
@@ -21,7 +19,26 @@ export const loginApi = async (credentials) => {
     const res = await API.post("/login", credentials);
     return res.data;
   } catch (err) {
-    const errorMessage = err.response?.data?.message || "An unexpected login error occurred.";
-    throw new Error(errorMessage);
+    throw err.response?.data || { message: "Login failed" };
+  }
+};
+
+// ADD THE TWO MISSING FUNCTIONS BELOW
+
+export const forgotPasswordApi = async (email) => {
+  try {
+    const res = await API.post("/forgot-password", { email });
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || { message: "Request failed" };
+  }
+};
+
+export const resetPasswordApi = async (token, password) => {
+  try {
+    const res = await API.post(`/reset-password/${token}`, { password });
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || { message: "Request failed" };
   }
 };

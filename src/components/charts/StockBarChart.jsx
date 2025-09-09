@@ -5,36 +5,37 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const StockBarChart = ({ stockData }) => {
   const options = {
-    indexAxis: 'y', // This makes the bar chart horizontal
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: false, // Important for custom height
     plugins: {
       legend: {
-        display: false,
+        display: false, // We don't need a legend for a single dataset
       },
       title: {
-        display: true,
-        text: 'Current Stock Levels',
-        color: '#111827',
-        font: { size: 18, weight: 'bold' },
-        padding: { bottom: 20 }
+        display: false, // The title will be in the dashboard card
       },
       tooltip: {
-        backgroundColor: '#111827',
-        titleFont: { size: 14 },
-        bodyFont: { size: 12 },
+        backgroundColor: '#1f2937', // Dark tooltip background
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
         cornerRadius: 4,
-        displayColors: false,
+        displayColors: false, // Hide the little color box
+        callbacks: {
+          label: function(context) {
+            return `Quantity: ${context.parsed.y}`;
+          }
+        }
       }
     },
     scales: {
       y: {
-        ticks: { color: '#4b5563' },
-        grid: { display: false }
+        beginAtZero: true,
+        ticks: { color: '#6b7280' },
+        grid: { color: '#e5e7eb' } // Lighter grid lines
       },
       x: {
-        ticks: { color: '#4b5563' },
-        grid: { color: '#e5e7eb' }
+        ticks: { color: '#6b7280' },
+        grid: { display: false } // No vertical grid lines
       }
     }
   };
@@ -43,18 +44,18 @@ const StockBarChart = ({ stockData }) => {
     labels: stockData.map(item => item.product_name),
     datasets: [
       {
-        label: 'Quantity',
+        label: 'Quantity in Stock',
         data: stockData.map(item => item.quantity),
-        backgroundColor: 'rgba(79, 70, 229, 0.6)',
-        borderColor: 'rgba(79, 70, 229, 1)',
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgba(59, 130, 246, 1)',
         borderWidth: 1,
         borderRadius: 4,
-        hoverBackgroundColor: 'rgba(79, 70, 229, 0.8)',
+        hoverBackgroundColor: 'rgba(59, 130, 246, 0.7)',
       },
     ],
   };
 
-  return <div style={{ height: '400px' }}><Bar options={options} data={data} /></div>;
+  return <div style={{ height: '350px' }}><Bar options={options} data={data} /></div>;
 };
 
 export default StockBarChart;

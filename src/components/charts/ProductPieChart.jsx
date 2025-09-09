@@ -1,65 +1,77 @@
-import { PolarArea } from 'react-chartjs-2';
-import { Chart as ChartJS, RadialLinearScale, ArcElement, Tooltip, Legend, Title } from 'chart.js';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
 
-ChartJS.register(RadialLinearScale, ArcElement, Tooltip, Legend, Title);
+ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
 const ProductPieChart = ({ productData }) => {
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: '#4b5563',
-          font: { size: 12 },
-          boxWidth: 15,
-          padding: 20,
-        }
-      },
-      title: {
-        display: true,
-        text: 'Product Variety',
-        color: '#111827',
-        font: { size: 18, weight: 'bold' },
-        padding: { bottom: 20 }
-      },
-       tooltip: {
-        backgroundColor: '#111827',
-        titleFont: { size: 14 },
-        bodyFont: { size: 12 },
-        cornerRadius: 4,
-        displayColors: false,
-      }
-    },
-    scales: {
-        r: {
-            grid: { color: '#e5e7eb' },
-            ticks: {
-                display: false // Hides the radial number scale for a cleaner look
+    const totalProducts = productData.length;
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { 
+                color: '#4b5563', 
+                font: { size: 12 },
+                padding: 15,
+                boxWidth: 12,
             }
+          },
+          title: {
+            display: false,
+          },
+          tooltip: {
+            backgroundColor: '#1f2937',
+            cornerRadius: 4,
+            displayColors: false,
+          }
+        },
+        cutout: '70%', // Makes the doughnut hole larger for a modern look
+      };
+
+    const data = {
+        labels: productData.map(p => p.name),
+        datasets: [{
+            label: 'Products',
+            data: productData.map(() => 1), // Each product is one slice
+            backgroundColor: [
+                '#3B82F6', '#10B981', '#F59E0B', '#EF4444', 
+                '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'
+            ],
+            borderColor: '#ffffff', // White border between slices
+            borderWidth: 3,
+            hoverOffset: 8,
+        }]
+    };
+
+    // Custom plugin to draw text in the middle of the doughnut chart
+    const centerTextPlugin = {
+        id: 'centerText',
+        afterDraw: (chart) => {
+            let ctx = chart.ctx;
+            ctx.save();
+            let centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+            let centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // "Total" text
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = '#6b7280';
+            ctx.fillText('Total', centerX, centerY - 12);
+            
+            // The actual count
+            ctx.font = 'bold 32px sans-serif';
+            ctx.fillStyle = '#1f2937';
+            ctx.fillText(totalProducts, centerX, centerY + 16);
+            ctx.restore();
         }
     }
-  };
 
-  const data = {
-    labels: productData.map(p => p.name),
-    datasets: [{
-      label: 'Products',
-      data: productData.map((p, index) => 1 + index), // Vary data slightly for a better visual
-      backgroundColor: [
-        'rgba(59, 130, 246, 0.5)',
-        'rgba(16, 185, 129, 0.5)',
-        'rgba(239, 68, 68, 0.5)',
-        'rgba(139, 92, 246, 0.5)',
-        'rgba(245, 158, 11, 0.5)',
-        'rgba(236, 72, 153, 0.5)',
-      ],
-      borderColor: '#ffffff',
-      borderWidth: 2,
-    }]
-  };
-  return <div style={{ height: '400px' }}><PolarArea options={options} data={data} /></div>;
+    return <div style={{ height: '350px' }}><Doughnut options={options} data={data} plugins={[centerTextPlugin]} /></div>;
 }
 
 export default ProductPieChart;

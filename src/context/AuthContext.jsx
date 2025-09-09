@@ -5,10 +5,9 @@ const AuthContext = createContext();
 
 const getInitialUser = () => {
   try {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    const item = localStorage.getItem("user");
+    return item ? JSON.parse(item) : null;
   } catch (error) {
-    console.error("Failed to parse user from localStorage:", error);
     localStorage.removeItem("user");
     return null;
   }
@@ -19,25 +18,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      // loginApi returns the full server response: { success, data: { token, user } }
       const serverResponse = await loginApi({ email, password });
-      
-      // **This correctly accesses the token and user from the nested 'data' object**
-      const { token, user } = serverResponse.data;
-
+      const { token, user: userData } = serverResponse.data;
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-      return user;
-    } catch (err) {
-      throw err;
-    }
-  };
-
-  const register = async (userData) => {
-    try {
-      const res = await registerApi(userData);
-      return res;
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+      return userData;
     } catch (err) {
       throw err;
     }
@@ -49,8 +35,24 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // --- ADD THIS NEW FUNCTION ---
+  // This function updates the user state AND the localStorage
+  const updateUserInContext = (newUserData) => {
+    setUser(newUserData);
+    localStorage.setItem("user", JSON.stringify(newUserData));
+  };
+
+
+  const value = {
+    user,
+    setUser, // Keep this for direct state manipulation if needed
+    login,
+    logout,
+    updateUserInContext, // Provide the new function to the context
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

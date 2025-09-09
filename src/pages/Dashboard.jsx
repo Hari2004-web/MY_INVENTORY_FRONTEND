@@ -17,7 +17,6 @@ const Dashboard = () => {
         setLoading(true);
         const productRes = await getProducts();
         setProducts(productRes.data || []);
-        
         const stockRes = await getStocks();
         setStocks(stockRes.data || []);
       } catch (error) {
@@ -26,41 +25,35 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600 mt-1">
-          Welcome back, {user?.username || 'User'}! Here's your graphical overview.
+        <h1 className="text-3xl font-bold text-slate-800">Dashboard</h1>
+        <p className="text-slate-500 mt-1">
+          Welcome back, {user?.username || 'User'}! Here is your inventory overview.
         </p>
       </div>
-
       {loading ? (
-        <p>Loading charts...</p>
+        <p className="text-center text-slate-500">Loading dashboard data...</p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg">
+             <h3 className="text-lg font-semibold text-slate-800 mb-4">Stock Levels</h3>
             {stocks.length > 0 ? (
               <StockBarChart stockData={stocks} />
             ) : (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold text-gray-700">No Stock Data</h3>
-                <p className="text-sm text-gray-500">Add stock to see the chart.</p>
-              </div>
+              <div className="text-center py-12 text-slate-500">No stock data to display.</div>
             )}
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Product Variety</h3>
             {products.length > 0 ? (
               <ProductPieChart productData={products} />
             ) : (
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold text-gray-700">No Product Data</h3>
-                <p className="text-sm text-gray-500">Add products to see the chart.</p>
-              </div>
+              <div className="text-center py-12 text-slate-500">No product data to display.</div>
             )}
           </div>
         </div>

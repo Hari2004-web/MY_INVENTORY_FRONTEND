@@ -29,3 +29,17 @@ export const sendMessage = async (messageData) => {
   const { data } = await API.post("/users/send-message", messageData);
   return data;
 };
+
+// ... (keep other functions)
+
+export const uploadAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  const { data } = await API.post("/users/profile/avatar", formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return data;
+};

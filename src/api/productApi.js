@@ -5,13 +5,25 @@ export const getProducts = async () => {
   return data;
 };
 
-export const createProduct = async (product) => {
-  const { data } = await API.post("/products", product);
+export const createProduct = async (productData) => {
+  const formData = new FormData();
+  for (const key in productData) {
+    formData.append(key, productData[key]);
+  }
+  const { data } = await API.post("/products", formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
   return data;
 };
 
-export const updateProduct = async (id, product) => {
-  const { data } = await API.put(`/products/${id}`, product);
+export const updateProduct = async (id, productData) => {
+  const formData = new FormData();
+  for (const key in productData) {
+    formData.append(key, productData[key]);
+  }
+  const { data } = await API.put(`/products/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
   return data;
 };
 
