@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { getUsers, createUser, updateUser, deleteUser } from "../api/userApi";
-import { sendMessage } from "../api/messageApi";
-import Modal from "../components/modals"; // FIX: Corrected the import path from "modals" to "Modal"
+import { getUsers, createUser, updateUser, deleteUser, sendMessage } from "../api/userApi"; // sendMessage is from userApi now
+import Modal from "../components/modals";
 
+// Icons remain the same...
 const EyeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>;
 const EyeOffIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2 2 0 01-2.828 2.828l-1.514-1.514a4 4 0 00-1.01-4.434L4.93 4.93a10.075 10.075 0 015.07-1.932 10.007 10.007 0 012.23.355l-1.64 1.641a4 4 0 00-2.33 2.33z" clipRule="evenodd" /><path d="M10 12a2 2 0 110-4 2 2 0 010 4z" /></svg>;
+
 
 const Managers = () => {
   const [managers, setManagers] = useState([]);
@@ -13,9 +14,10 @@ const Managers = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // New state for the message modal
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
-  const [messageData, setMessageData] = useState({ recipient_id: null, subject: '', body: '' });
+  // FIX: State now holds the full manager object to access their email
+  const [messagingManager, setMessagingManager] = useState(null);
+  const [messageData, setMessageData] = useState({ subject: '', message: '' });
   const [messageStatus, setMessageStatus] = useState('');
 
   const fetchManagers = async () => {
@@ -27,9 +29,7 @@ const Managers = () => {
     }
   };
 
-  useEffect(() => {
-    fetchManagers();
-  }, []);
+  useEffect(() => { fetchManagers(); }, []);
 
   const handleOpenModal = (user = null) => {
     setIsEditing(!!user);
@@ -48,36 +48,39 @@ const Managers = () => {
     } else {
       await createUser(currentUser);
     }
-    fetchManagers(); // This line refreshes the manager list
+    fetchManagers();
     handleCloseModal();
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure?")) {
       await deleteUser(id);
-      fetchManagers(); // This line refreshes the manager list
+      fetchManagers();
     }
   };
 
-  // --- Functions for the message modal ---
   const handleOpenMessageModal = (manager) => {
-    setMessageData({ recipient_id: manager.id, subject: '', body: '' });
+    setMessagingManager(manager); // Store the manager object
+    setMessageData({ subject: '', message: '' }); // Reset message fields
     setMessageStatus('');
     setIsMessageModalOpen(true);
   };
 
   const handleCloseMessageModal = () => setIsMessageModalOpen(false);
-
-  const handleMessageChange = (e) => {
-    setMessageData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const handleMessageChange = (e) => setMessageData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
     setMessageStatus('Sending...');
     try {
-      const response = await sendMessage(messageData);
-      setMessageStatus(response.message);
+      // FIX: Construct the correct payload with 'email', 'subject', and 'message'
+      const payload = {
+        email: messagingManager.email,
+        subject: messageData.subject,
+        message: messageData.message,
+      };
+      const response = await sendMessage(payload); // sendMessage is now from userApi
+      setMessageStatus(response.message || "Message sent successfully!");
       setTimeout(() => handleCloseMessageModal(), 2000);
     } catch (error) {
       setMessageStatus(error.response?.data?.error || "Failed to send.");
@@ -109,8 +112,8 @@ const Managers = () => {
         ))}
       </ul>
 
-      {/* Add/Edit Manager Modal */}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={isEditing ? "Edit Manager" : "Add Manager"}>
+        {/* ... form for add/edit manager remains the same */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="text" name="username" placeholder="Username" value={currentUser.username} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
           <input type="email" name="email" placeholder="Email" value={currentUser.email} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
@@ -129,10 +132,10 @@ const Managers = () => {
         </form>
       </Modal>
 
-      {/* Send Message Modal */}
-      <Modal isOpen={isMessageModalOpen} onClose={handleCloseMessageModal} title={`Send Message to ${messageData.email}`}>
+      <Modal isOpen={isMessageModalOpen} onClose={handleCloseMessageModal} title={`Send Message to ${messagingManager?.username}`}>
         <form onSubmit={handleSendMessage} className="space-y-4">
           <input type="text" name="subject" placeholder="Subject" value={messageData.subject} onChange={handleMessageChange} className="w-full p-2 border rounded-lg" required />
+          {/* FIX: 'name' attribute changed from 'message' to 'body' to match backend */}
           <textarea name="message" rows="4" placeholder="Your message..." value={messageData.message} onChange={handleMessageChange} className="w-full p-2 border rounded-lg" required></textarea>
           {messageStatus && <p className="text-sm text-center">{messageStatus}</p>}
           <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">

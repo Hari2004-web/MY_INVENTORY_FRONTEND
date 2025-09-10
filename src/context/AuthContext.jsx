@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from "react";
-import { loginApi, registerApi } from "../api/authApi";
+import { loginApi } from "../api/authApi"; // registerApi is not used here, can be removed
 
 const AuthContext = createContext();
 
@@ -8,6 +8,7 @@ const getInitialUser = () => {
     const item = localStorage.getItem("user");
     return item ? JSON.parse(item) : null;
   } catch (error) {
+    // If parsing fails, remove the corrupted item
     localStorage.removeItem("user");
     return null;
   }
@@ -35,8 +36,9 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // --- ADD THIS NEW FUNCTION ---
-  // This function updates the user state AND the localStorage
+  // --- FIX: ADD THIS NEW FUNCTION ---
+  // This function is the key. It updates the user state in the context
+  // AND updates the user data in localStorage to keep them in sync.
   const updateUserInContext = (newUserData) => {
     setUser(newUserData);
     localStorage.setItem("user", JSON.stringify(newUserData));
@@ -45,10 +47,10 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    setUser, // Keep this for direct state manipulation if needed
+    setUser, // Keep for direct manipulation if needed
     login,
     logout,
-    updateUserInContext, // Provide the new function to the context
+    updateUserInContext, // Provide the new function to the rest of the app
   };
 
   return (

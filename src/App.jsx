@@ -19,10 +19,10 @@ import Inbox from "./pages/Inbox";
 import Profile from "./pages/Profile";
 import ProductList from "./pages/shop/ProductList";
 
-// This component now correctly redirects to the prefixed login page
+// FIX: This component correctly protects routes and redirects to the login page.
+// The separate 'ProtectedRoute.jsx' file is no longer needed.
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
-  // FIX: Changed redirect path to "/portal/login"
   return user ? children : <Navigate to="/login" />;
 };
 
@@ -44,6 +44,7 @@ const RoleBasedLayout = () => {
       </ManagerLayout>
     );
   }
+  // You might want to add a loader here while the user object is being checked
   return <div>Loading...</div>;
 };
 
