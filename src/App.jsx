@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext"; // 1. Import CartProvider
 
 // Layouts
 import AdminLayout from "./layouts/AdminLayout";
@@ -51,6 +52,7 @@ const RoleBasedLayout = () => {
 function App() {
   return (
     <AuthProvider>
+      <CartProvider>  {/* 2. Wrap with CartProvider */}
       <Router>
         <Routes>
           {/* --- PUBLIC ROUTES --- */}
@@ -74,6 +76,7 @@ function App() {
 
         </Routes>
       </Router>
+      </CartProvider>
     </AuthProvider>
   );
 }
