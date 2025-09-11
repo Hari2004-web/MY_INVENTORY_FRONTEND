@@ -36,6 +36,7 @@ const ResetPassword = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="password"
+            name="newpassword"
             placeholder="Enter New Password"
             className="w-full px-4 py-2 border rounded-lg"
             value={password}
@@ -44,6 +45,7 @@ const ResetPassword = () => {
           />
           <input
             type="password"
+            name="confirmpassword"
             placeholder="Confirm New Password"
             className="w-full px-4 py-2 border rounded-lg"
             value={confirmPassword}

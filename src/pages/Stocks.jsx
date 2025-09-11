@@ -1,8 +1,11 @@
+// src/pages/Stocks.jsx
+
 import { useEffect, useState } from "react";
 import { getStocks, createStock, updateStock, deleteStock } from "../api/stockApi";
 import { getProducts } from "../api/productApi";
 import Modal from "../components/modals";
 import { useAuth } from "../context/AuthContext";
+import Button from "../components/Button"; // Import the Button component
 
 const Stocks = () => {
   const { user } = useAuth();
@@ -11,6 +14,10 @@ const Stocks = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStock, setCurrentStock] = useState({ product_id: '', quantity: '' });
   const [isEditing, setIsEditing] = useState(false);
+
+  // --- NEW STATE FOR DELETE CONFIRMATION ---
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [stockToDelete, setStockToDelete] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -49,18 +56,29 @@ const Stocks = () => {
     handleCloseModal();
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure?")) {
-      await deleteStock(id);
+  // --- MODIFIED DELETE PROCESS ---
+
+  // 1. Opens the confirmation modal
+  const handleDeleteRequest = (id) => {
+    setStockToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  // 2. Executes deletion after confirmation
+  const confirmDelete = async () => {
+    if (stockToDelete) {
+      await deleteStock(stockToDelete);
       fetchData();
+      setIsDeleteModalOpen(false);
+      setStockToDelete(null);
     }
   };
+
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Stock Levels</h1>
-        {/* This button ONLY appears for managers */}
         {user?.role === 'manager' && (
           <button onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
             Add New Stock
@@ -75,17 +93,19 @@ const Stocks = () => {
                 <p className="font-semibold text-lg">{s.product_name}</p>
                 <p className="text-sm text-gray-600">Quantity: {s.quantity}</p>
               </div>
-              {/* These controls ONLY appear for managers */}
               {user?.role === 'manager' && (
                 <div className="flex gap-2">
                   <button onClick={() => handleOpenModal(s)} className="bg-yellow-500 text-white px-3 py-1 rounded-md text-sm">Edit</button>
-                  <button onClick={() => handleDelete(s.id)} className="bg-red-600 text-white px-3 py-1 rounded-md text-sm">Delete</button>
+                  {/* 👇 Calls the new confirmation function */}
+                  <button onClick={() => handleDeleteRequest(s.id)} className="bg-red-600 text-white px-3 py-1 rounded-md text-sm">Delete</button>
                 </div>
               )}
             </li>
           ))}
         </ul>
       </div>
+
+      {/* Add/Update Stock Modal */}
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={isEditing ? "Update Stock" : "Add Stock"}>
         <form onSubmit={handleSubmit}>
           {!isEditing && (
@@ -99,6 +119,23 @@ const Stocks = () => {
             {isEditing ? "Update Quantity" : "Add to Stock"}
           </button>
         </form>
+      </Modal>
+
+      {/* --- NEW DELETE CONFIRMATION MODAL --- */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Deletion">
+        <div className="text-center">
+          <p className="text-lg text-gray-600 mb-6">
+            Are you sure you want to delete this stock entry?
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmDelete} variant="danger">
+              Delete
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

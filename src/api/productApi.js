@@ -29,3 +29,10 @@ export const updateProduct = async (id, formData) => {
 export const deleteProduct = async (id) => {
   return API.delete(`/products/${id}`);
 };
+
+
+// ADD THIS NEW FUNCTION
+export const getProductById = async (id) => {
+  const { data } = await API.get(`/products/${id}`);
+  return data;
+};

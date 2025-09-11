@@ -34,6 +34,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
             type="email"
+            name="email"
             placeholder="Email Address"
             className="w-full px-4 py-3 text-white bg-slate-900/50 border border-slate-700 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             value={email}
@@ -43,6 +44,7 @@ const Login = () => {
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
+              name="password"
               placeholder="Password"
               className="w-full px-4 py-3 text-white bg-slate-900/50 border border-slate-700 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
               value={password}

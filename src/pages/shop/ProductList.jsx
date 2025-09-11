@@ -1,18 +1,43 @@
 import { useState, useEffect } from "react";
 import { getPublicProducts } from "../../api/publicApi";
-import { useCart } from "../../context/CartContext"; // 1. Import the useCart hook
+import { useCart } from "../../context/CartContext";
+import { createBill } from "../../api/billingApi";
+import toast from 'react-hot-toast'; // 👈 1. Import toast
 
 // --- Helper Icons ---
 const ArrowRightIcon = () => <svg className="w-6 h-6 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>;
 const CartIconSvg = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>;
 
-// --- 2. ADD THE CART MODAL COMPONENT ---
+// --- Cart Modal Component (no changes here) ---
 const CartModal = ({ isOpen, onClose }) => {
-    const { cartItems, removeFromCart, updateQuantity } = useCart();
+    const { cartItems, removeFromCart, updateQuantity, clearCart } = useCart();
 
     if (!isOpen) return null;
 
     const cartTotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+    const handleCheckout = async () => {
+        const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+        const gstAmount = subtotal * 0.18;
+        const totalAmount = subtotal + gstAmount;
+
+        const billData = {
+            products: cartItems.map(({ id, name, quantity, price }) => ({ id, name, quantity, price })),
+            total_amount: totalAmount,
+            gst_amount: gstAmount,
+        };
+
+        try {
+            await createBill(billData);
+            toast.success('Your order has been placed successfully!');
+            clearCart();
+            onClose();
+        } catch (error) {
+            console.error("Failed to create bill:", error);
+            toast.error(error.response?.data?.error || "An unexpected error occurred.");
+        }
+    };
+
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-end" onClick={onClose}>
@@ -32,7 +57,7 @@ const CartModal = ({ isOpen, onClose }) => {
                                 <img src={`http://localhost:5000${item.image_url}`} alt={item.name} className="w-24 h-24 object-cover rounded-lg"/>
                                 <div className="flex-grow">
                                     <h3 className="font-semibold">{item.name}</h3>
-                                    <p className="text-gray-400">${item.price}</p>
+                                    <p className="text-gray-400">₹{item.price}</p>
                                     <div className="flex items-center mt-2">
                                         <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-3 py-1 bg-gray-700 rounded-md">-</button>
                                         <span className="px-4 font-bold">{item.quantity}</span>
@@ -47,9 +72,9 @@ const CartModal = ({ isOpen, onClose }) => {
                 <div className="p-5 border-t border-gray-700">
                     <div className="flex justify-between font-bold text-xl mb-4">
                         <span>Total:</span>
-                        <span>${cartTotal.toFixed(2)}</span>
+                        <span>₹{cartTotal.toFixed(2)}</span>
                     </div>
-                    <button className="w-full py-3 bg-[#007CF0] text-white font-bold rounded-lg hover:bg-blue-600 transition-colors">
+                    <button onClick={handleCheckout} className="w-full py-3 bg-[#007CF0] text-white font-bold rounded-lg hover:bg-blue-600 transition-colors">
                         Proceed to Checkout
                     </button>
                 </div>
@@ -70,8 +95,14 @@ const SkeletonCard = () => (
 
 // --- A redesigned, cinematic Product Card ---
 const ProductCard = ({ product }) => {
-  const { addToCart } = useCart(); // 3. Get the addToCart function
+  const { addToCart } = useCart();
   const imageUrl = product.image_url ? `http://localhost:5000${product.image_url}` : 'https://via.placeholder.com/500';
+
+  // 👇 2. Create a handler to call addToCart and show the toast
+  const handleAddToCart = () => {
+    addToCart(product);
+    toast.success(`${product.name} added to cart!`);
+  };
 
   return (
     <div className="group relative bg-[#1A1A1A] rounded-2xl overflow-hidden transition-all duration-300 ease-in-out hover:shadow-[0_0_35px_rgba(0,124,240,0.5)] hover:ring-2 hover:ring-[#007CF0]">
@@ -80,11 +111,11 @@ const ProductCard = ({ product }) => {
       </div>
       <div className="p-5">
         <h3 className="text-lg font-bold text-white truncate">{product.name}</h3>
-        <p className="text-2xl font-black text-white mt-2">${parseFloat(product.price).toFixed(2)}</p>
+        <p className="text-2xl font-black text-white mt-2">₹{parseFloat(product.price).toFixed(2)}</p>
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       <button 
-        onClick={() => addToCart(product)} // 4. Add the product to the cart on click
+        onClick={handleAddToCart} // 👈 3. Use the new handler here
         disabled={product.quantity === 0}
         className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full group-hover:translate-y-[-20px] w-10/12 py-3 px-4 bg-[#007CF0] text-white font-bold rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out disabled:bg-gray-500 disabled:cursor-not-allowed"
       >
@@ -98,8 +129,8 @@ const ProductCard = ({ product }) => {
 const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isCartOpen, setIsCartOpen] = useState(false); // 5. State to control the cart modal
-  const { cartItems } = useCart(); // 6. Get cart items to display the count
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { cartItems } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -119,7 +150,7 @@ const ProductList = () => {
 
   return (
     <div className="bg-[#121212] text-gray-200 font-sans">
-      <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} /> {/* 7. Render the cart modal */}
+      <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
       {/* --- New Header --- */}
       <header className="bg-black/50 backdrop-blur-lg sticky top-0 z-50 border-b border-gray-800">

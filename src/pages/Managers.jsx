@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getUsers, createUser, updateUser, deleteUser, sendMessage } from "../api/userApi"; // sendMessage is from userApi now
+import { getUsers, createUser, updateUser, deleteUser, sendMessage } from "../api/userApi";
 import Modal from "../components/modals";
 
 // Icons remain the same...
@@ -10,29 +10,31 @@ const EyeOffIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 
 const Managers = () => {
   const [managers, setManagers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // **MODIFICATION**: Set default role to 'manager' for new users.
   const [currentUser, setCurrentUser] = useState({ username: '', email: '', password: '', role: 'manager' });
   const [isEditing, setIsEditing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
-  // FIX: State now holds the full manager object to access their email
   const [messagingManager, setMessagingManager] = useState(null);
   const [messageData, setMessageData] = useState({ subject: '', message: '' });
   const [messageStatus, setMessageStatus] = useState('');
 
-  const fetchManagers = async () => {
+  const fetchUsers = async () => {
     try {
       const response = await getUsers();
-      setManagers(response.data.filter(user => user.role === 'manager'));
+      // **MODIFICATION**: Filter for both manager and billing_manager roles to display them on the page.
+      setManagers(response.data.filter(user => user.role === 'manager' || user.role === 'billing_manager'));
     } catch (error) {
-      console.error("Failed to fetch managers:", error);
+      console.error("Failed to fetch users:", error);
     }
   };
 
-  useEffect(() => { fetchManagers(); }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const handleOpenModal = (user = null) => {
     setIsEditing(!!user);
+    // **MODIFICATION**: When editing, use the user's current role. When adding, default to 'manager'.
     setCurrentUser(user ? { ...user, password: '' } : { username: '', email: '', password: '', role: 'manager' });
     setShowPassword(false);
     setIsModalOpen(true);
@@ -48,20 +50,20 @@ const Managers = () => {
     } else {
       await createUser(currentUser);
     }
-    fetchManagers();
+    fetchUsers();
     handleCloseModal();
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure?")) {
       await deleteUser(id);
-      fetchManagers();
+      fetchUsers();
     }
   };
 
   const handleOpenMessageModal = (manager) => {
-    setMessagingManager(manager); // Store the manager object
-    setMessageData({ subject: '', message: '' }); // Reset message fields
+    setMessagingManager(manager);
+    setMessageData({ subject: '', message: '' });
     setMessageStatus('');
     setIsMessageModalOpen(true);
   };
@@ -73,13 +75,8 @@ const Managers = () => {
     e.preventDefault();
     setMessageStatus('Sending...');
     try {
-      // FIX: Construct the correct payload with 'email', 'subject', and 'message'
-      const payload = {
-        email: messagingManager.email,
-        subject: messageData.subject,
-        message: messageData.message,
-      };
-      const response = await sendMessage(payload); // sendMessage is now from userApi
+      const payload = { email: messagingManager.email, subject: messageData.subject, message: messageData.message };
+      const response = await sendMessage(payload);
       setMessageStatus(response.message || "Message sent successfully!");
       setTimeout(() => handleCloseMessageModal(), 2000);
     } catch (error) {
@@ -90,9 +87,9 @@ const Managers = () => {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-semibold">Manage Managers</h1>
+        <h1 className="text-xl font-semibold">Manage Users</h1>
         <button onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Add Manager
+          Add User
         </button>
       </div>
 
@@ -102,6 +99,8 @@ const Managers = () => {
             <div>
               <p className="font-semibold">{m.username}</p>
               <p className="text-sm text-gray-500">{m.email}</p>
+              {/* **MODIFICATION**: Display the user's role clearly. */}
+              <p className="text-xs font-bold uppercase text-blue-600 mt-1">{m.role.replace('_', ' ')}</p>
             </div>
             <div className="space-x-2">
               <button onClick={() => handleOpenMessageModal(m)} className="text-sm bg-green-500 text-white px-3 py-1 rounded">Message</button>
@@ -112,11 +111,29 @@ const Managers = () => {
         ))}
       </ul>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={isEditing ? "Edit Manager" : "Add Manager"}>
-        {/* ... form for add/edit manager remains the same */}
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={isEditing ? "Edit User" : "Add User"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="text" name="username" placeholder="Username" value={currentUser.username} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
           <input type="email" name="email" placeholder="Email" value={currentUser.email} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
+          
+          {/* === THE KEY CHANGE IS HERE === */}
+          {/* This dropdown allows the admin to select the user's role. */}
+          <div>
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
+            <select
+              id="role"
+              name="role"
+              value={currentUser.role}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-lg mt-1"
+              required
+            >
+              <option value="manager">Manager</option>
+              <option value="billing_manager">Billing Manager</option>
+            </select>
+          </div>
+          {/* ============================== */}
+
           {!isEditing && (
             <div className="relative">
               <input type={showPassword ? "text" : "password"} name="password" placeholder="Password" value={currentUser.password} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
@@ -125,9 +142,9 @@ const Managers = () => {
               </button>
             </div>
           )}
-          <input type="hidden" name="role" value="manager" />
+
           <button type="submit" className="w-full bg-green-600 text-white p-2 rounded-md">
-            {isEditing ? "Save Changes" : "Create Manager"}
+            {isEditing ? "Save Changes" : "Create User"}
           </button>
         </form>
       </Modal>
@@ -135,7 +152,6 @@ const Managers = () => {
       <Modal isOpen={isMessageModalOpen} onClose={handleCloseMessageModal} title={`Send Message to ${messagingManager?.username}`}>
         <form onSubmit={handleSendMessage} className="space-y-4">
           <input type="text" name="subject" placeholder="Subject" value={messageData.subject} onChange={handleMessageChange} className="w-full p-2 border rounded-lg" required />
-          {/* FIX: 'name' attribute changed from 'message' to 'body' to match backend */}
           <textarea name="message" rows="4" placeholder="Your message..." value={messageData.message} onChange={handleMessageChange} className="w-full p-2 border rounded-lg" required></textarea>
           {messageStatus && <p className="text-sm text-center">{messageStatus}</p>}
           <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">

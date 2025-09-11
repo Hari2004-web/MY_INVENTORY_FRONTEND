@@ -28,6 +28,7 @@ const ForgotPassword = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
+            name="email"
             placeholder="Your Email Address"
             className="w-full px-4 py-2 border rounded-lg"
             value={email}
