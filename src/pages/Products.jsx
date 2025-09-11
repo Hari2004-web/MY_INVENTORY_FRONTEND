@@ -1,5 +1,3 @@
-// src/pages/Products.jsx
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts, createProduct, deleteProduct } from "../api/productApi";
@@ -25,7 +23,6 @@ const ProductCard = ({ product, onDelete, userRole }) => {
           {userRole === 'manager' && (
             <>
               <button onClick={handleEdit} className="bg-white/20 backdrop-blur-lg px-4 py-2 rounded-full text-sm font-semibold hover:bg-white/30">Edit</button>
-              {/* This onClick is what we'll be changing the logic for */}
               <button onClick={() => onDelete(product.id)} className="bg-red-500/50 backdrop-blur-lg px-4 py-2 rounded-full text-sm font-semibold hover:bg-red-500/70">Delete</button>
             </>
           )}
@@ -49,8 +46,6 @@ const Products = () => {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState({ name: '', description: '', sku: '', price: '' });
   const [imageFile, setImageFile] = useState(null);
-
-  // --- NEW STATE FOR DELETE CONFIRMATION ---
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
@@ -70,29 +65,24 @@ const Products = () => {
     setIsFormModalOpen(true);
   };
 
-  // --- MODIFIED DELETE PROCESS ---
-
-  // 1. This function opens the confirmation modal
   const handleDeleteRequest = (id) => {
     setProductToDelete(id);
     setIsDeleteModalOpen(true);
   };
 
-  // 2. This function executes the deletion after confirmation
   const confirmDelete = async () => {
     if (productToDelete) {
       try {
         await deleteProduct(productToDelete);
-        fetchProducts(); // Refresh the product list
+        fetchProducts();
       } catch (error) {
         console.error("Failed to delete product:", error);
       } finally {
-        setIsDeleteModalOpen(false); // Close the modal
-        setProductToDelete(null); // Reset the state
+        setIsDeleteModalOpen(false);
+        setProductToDelete(null);
       }
     }
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -126,18 +116,30 @@ const Products = () => {
           <ProductCard 
             key={p.id} 
             product={p} 
-            onDelete={handleDeleteRequest} // Pass the new function
+            onDelete={handleDeleteRequest}
             userRole={user?.role}
           />
         ))}
       </div>
 
-      {/* Add/Edit Product Modal */}
+      {/* --- ADD PRODUCT MODAL WITH FORM --- */}
       <Modal isOpen={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} title="Add Product">
-        {/* ... (form content remains the same) ... */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="text" name="name" placeholder="Product Name" value={currentProduct?.name || ''} onChange={(e) => setCurrentProduct({...currentProduct, name: e.target.value})} className="w-full p-2 border rounded-lg" required />
+          <textarea name="description" placeholder="Description" value={currentProduct?.description || ''} onChange={(e) => setCurrentProduct({...currentProduct, description: e.target.value})} className="w-full p-2 border rounded-lg" />
+          <input type="text" name="sku" placeholder="SKU" value={currentProduct?.sku || ''} onChange={(e) => setCurrentProduct({...currentProduct, sku: e.target.value})} className="w-full p-2 border rounded-lg" />
+          <input type="number" name="price" placeholder="Price" value={currentProduct?.price || ''} onChange={(e) => setCurrentProduct({...currentProduct, price: e.target.value})} className="w-full p-2 border rounded-lg" step="0.01"/>
+          <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+             <input type="file" name="image" onChange={(e) => setImageFile(e.target.files[0])} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+          </div>
+          <Button type="submit" variant="success" className="w-full">
+            Create Product
+          </Button>
+        </form>
       </Modal>
 
-      {/* --- NEW DELETE CONFIRMATION MODAL --- */}
+      {/* --- DELETE CONFIRMATION MODAL --- */}
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Deletion">
         <div className="text-center">
           <p className="text-lg text-gray-600 mb-6">
