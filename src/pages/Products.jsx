@@ -5,7 +5,6 @@ import Modal from "../components/modals";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/Button";
 
-// --- Product Card Component (No changes needed here) ---
 const ProductCard = ({ product, onDelete, userRole }) => {
   const navigate = useNavigate();
   const imageUrl = product.image_url ? `http://localhost:5000${product.image_url}` : '/placeholder.png';
@@ -39,12 +38,11 @@ const ProductCard = ({ product, onDelete, userRole }) => {
   );
 };
 
-
 const Products = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState({ name: '', description: '', sku: '', price: '' });
+  const [currentProduct, setCurrentProduct] = useState({ name: '', description: '', sku: '', price: '', category: 'laptops' });
   const [imageFile, setImageFile] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
@@ -60,7 +58,7 @@ const Products = () => {
   useEffect(() => { fetchProducts(); }, []);
 
   const handleOpenAddModal = () => {
-    setCurrentProduct({ name: '', description: '', sku: '', price: '' });
+    setCurrentProduct({ name: '', description: '', sku: '', price: '', category: 'laptops' });
     setImageFile(null);
     setIsFormModalOpen(true);
   };
@@ -122,13 +120,22 @@ const Products = () => {
         ))}
       </div>
 
-      {/* --- ADD PRODUCT MODAL WITH FORM --- */}
       <Modal isOpen={isFormModalOpen} onClose={() => setIsFormModalOpen(false)} title="Add Product">
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="text" name="name" placeholder="Product Name" value={currentProduct?.name || ''} onChange={(e) => setCurrentProduct({...currentProduct, name: e.target.value})} className="w-full p-2 border rounded-lg" required />
           <textarea name="description" placeholder="Description" value={currentProduct?.description || ''} onChange={(e) => setCurrentProduct({...currentProduct, description: e.target.value})} className="w-full p-2 border rounded-lg" />
           <input type="text" name="sku" placeholder="SKU" value={currentProduct?.sku || ''} onChange={(e) => setCurrentProduct({...currentProduct, sku: e.target.value})} className="w-full p-2 border rounded-lg" />
           <input type="number" name="price" placeholder="Price" value={currentProduct?.price || ''} onChange={(e) => setCurrentProduct({...currentProduct, price: e.target.value})} className="w-full p-2 border rounded-lg" step="0.01"/>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select name="category" value={currentProduct.category} onChange={(e) => setCurrentProduct({...currentProduct, category: e.target.value})} className="w-full p-2 border rounded-lg">
+              <option value="laptops">Laptops</option>
+              <option value="mobiles">Mobiles</option>
+              <option value="electronic gadgets">Electronic Gadgets</option>
+            </select>
+          </div>
+          
           <div>
              <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
              <input type="file" name="image" onChange={(e) => setImageFile(e.target.files[0])} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
@@ -139,7 +146,6 @@ const Products = () => {
         </form>
       </Modal>
 
-      {/* --- DELETE CONFIRMATION MODAL --- */}
       <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Deletion">
         <div className="text-center">
           <p className="text-lg text-gray-600 mb-6">

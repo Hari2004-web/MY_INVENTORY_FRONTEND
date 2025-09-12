@@ -49,3 +49,15 @@ export const updateProfile = async (userData) => {
   const { data } = await API.put("/users/profile", userData);
   return data;
 };
+
+// ADD THIS NEW FUNCTION at the end of the file
+export const getCustomerHistory = async (id) => {
+  const { data } = await API.get(`/users/customers/${id}/history`);
+  return data;
+};
+
+// NEW: This function calls the correct endpoint for fetching customers
+export const getCustomers = async () => {
+  const { data } = await API.get("/users/customers");
+  return data;
+};

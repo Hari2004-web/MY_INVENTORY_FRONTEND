@@ -9,3 +9,16 @@ export const getPublicProducts = async () => {
     const { data } = await publicApi.get('/products');
     return data;
 };
+
+
+// ADD THIS NEW FUNCTION
+export const getRecommendedProducts = async () => {
+    const { data } = await publicApi.get('/products/recommended');
+    return data;
+};
+
+// ADD THIS NEW FUNCTION
+export const getProductsByCategory = async (category) => {
+    const { data } = await publicApi.get(`/products/category/${category}`);
+    return data;
+};

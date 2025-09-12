@@ -16,7 +16,7 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import ChangePassword from "./pages/Auth/ChangePassword";
 import Dashboard from "./pages/Dashboard";
-import BillingDashboard from "./pages/BillingDashboard"; // The new dashboard for billers
+import BillingDashboard from "./pages/BillingDashboard";
 import Products from "./pages/Products";
 import Stocks from "./pages/Stocks";
 import Managers from "./pages/Managers";
@@ -25,8 +25,11 @@ import Profile from "./pages/Profile";
 import ProductList from "./pages/shop/ProductList";
 import Billing from "./pages/Billing";
 import BillDetails from "./pages/BillDetails";
-import ProductDetails from "./pages/ProductDetails"; // 👈 Import the new component
-import EditProduct from "./pages/EditProduct"; // 👈 Import the new component
+import ProductDetails from "./pages/ProductDetails";
+import EditProduct from "./pages/EditProduct";
+// NEW: Import the customer-related pages
+import Customers from "./pages/Customers";
+import CustomerDetails from "./pages/CustomerDetails";
 
 
 // --- PROTECTED ROUTE AND LAYOUT LOGIC (Unchanged) ---
@@ -61,10 +64,9 @@ const RoleBasedLayout = () => {
       </BillingManagerLayout>
     );
   }
-  return <Loader />; // Display a loader while user data is being checked
+  return <Loader />;
 };
 
-// --- NEW COMPONENT TO HANDLE DASHBOARD ROUTING ---
 const RoleBasedDashboard = () => {
   const { user } = useAuth();
 
@@ -74,7 +76,7 @@ const RoleBasedDashboard = () => {
   if (user?.role === 'billing_manager') {
     return <BillingDashboard />;
   }
-  return <Loader />; // Fallback while user is loading
+  return <Loader />;
 };
 
 
@@ -86,26 +88,23 @@ function App() {
           position="bottom-right"
           reverseOrder={false}
           toastOptions={{
-            // Define default options
             duration: 3000,
             style: {
-              background: '#2D3748', // A dark gray background
-              color: '#F7FAFC',      // A light gray text color
+              background: '#2D3748',
+              color: '#F7FAFC',
               borderRadius: '8px',
               border: '1px solid #4A5568',
             },
-
-            // Define specific options for different toast types
             success: {
               duration: 2000,
               iconTheme: {
-                primary: '#34D399', // Emerald green
+                primary: '#34D399',
                 secondary: '#F7FAFC',
               },
             },
             error: {
               iconTheme: {
-                primary: '#F87171', // Red
+                primary: '#F87171',
                 secondary: '#F7FAFC',
               },
             },
@@ -123,11 +122,10 @@ function App() {
           {/* --- PROTECTED PORTAL ROUTES --- */}
           <Route path="" element={<ProtectedRoute><RoleBasedLayout /></ProtectedRoute>}>
             
-            {/* THIS IS THE KEY CHANGE */}
             <Route path="dashboard" element={<RoleBasedDashboard />} />
             
             <Route path="products" element={<Products />} />
-            <Route path="products/:id" element={<ProductDetails />} /> {/* 👈 Add this new route */}
+            <Route path="products/:id" element={<ProductDetails />} />
             <Route path="products/edit/:id" element={<EditProduct />} />
 
             <Route path="stocks" element={<Stocks />} />
@@ -135,26 +133,21 @@ function App() {
             <Route path="profile" element={<Profile />} />
             <Route path="change-password" element={<ChangePassword />} />
             <Route path="managers" element={<Managers />} />
-            {/* <Route path="billing" element={<Billing />} />
-            <Route path="bill/:id" element={<BillDetails />} /> */}
+            
+            {/* NEW: Add the routes for the customer pages */}
+            <Route path="customers" element={<Customers />} />
+            <Route path="customers/:id" element={<CustomerDetails />} />
           </Route>
-    {/* --- MOVED BILLING ROUTES --- */}
-            <Route
+          
+          {/* --- BILLING ROUTES --- */}
+          <Route
               path="/billing"
-              element={
-                <ProtectedRoute>
-                  <Billing />
-                </ProtectedRoute>
-              }
-            />
-            <Route
+              element={<ProtectedRoute><Billing /></ProtectedRoute>}
+          />
+          <Route
               path="/bill/:id"
-              element={
-                <ProtectedRoute>
-                  <BillDetails />
-                </ProtectedRoute>
-              }
-            />
+              element={<ProtectedRoute><BillDetails /></ProtectedRoute>}
+          />
         </Routes>
       </Router>
       </CartProvider>

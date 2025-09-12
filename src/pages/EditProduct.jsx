@@ -40,21 +40,19 @@ const EditProduct = () => {
     e.preventDefault();
     const formData = new FormData();
     
-    // Append all product fields from the state
     Object.keys(product).forEach(key => {
       if (product[key] !== null) {
         formData.append(key, product[key]);
       }
     });
     
-    // If a new image was selected, append it
     if (imageFile) {
       formData.append('image', imageFile);
     }
 
     try {
       await updateProduct(id, formData);
-      navigate('/products'); // Redirect to the product list on success
+      navigate('/products');
     } catch (err) {
       setError('Failed to update product.');
       console.error(err);
@@ -74,6 +72,16 @@ const EditProduct = () => {
           <textarea name="description" placeholder="Description" value={product.description || ''} onChange={handleChange} className="w-full p-2 border rounded-lg" />
           <input type="text" name="sku" placeholder="SKU" value={product.sku || ''} onChange={handleChange} className="w-full p-2 border rounded-lg" />
           <input type="number" name="price" placeholder="Price" value={product.price || ''} onChange={handleChange} className="w-full p-2 border rounded-lg" step="0.01" />
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+            <select name="category" value={product.category} onChange={handleChange} className="w-full p-2 border rounded-lg">
+              <option value="laptops">Laptops</option>
+              <option value="mobiles">Mobiles</option>
+              <option value="electronic gadgets">Electronic Gadgets</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Update Product Image (Optional)</label>
             <input type="file" name="image" onChange={handleFileChange} className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />

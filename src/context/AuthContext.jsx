@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
-import { loginApi } from "../api/authApi"; // registerApi is not used here, can be removed
+import { loginApi } from "../api/authApi";
+import { customerLoginApi } from "../api/customerAuthApi"; // Import customer login API
 
 const AuthContext = createContext();
 
@@ -8,7 +9,6 @@ const getInitialUser = () => {
     const item = localStorage.getItem("user");
     return item ? JSON.parse(item) : null;
   } catch (error) {
-    // If parsing fails, remove the corrupted item
     localStorage.removeItem("user");
     return null;
   }
@@ -17,16 +17,20 @@ const getInitialUser = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(getInitialUser());
 
-  const login = async (email, password) => {
+  // MODIFIED: This function can now handle different login types
+  const login = async (email, password, type = 'portal') => {
     try {
-      const serverResponse = await loginApi({ email, password });
+      const apiToCall = type === 'customer' ? customerLoginApi : loginApi;
+      const serverResponse = await apiToCall({ email, password });
+      
       const { token, user: userData } = serverResponse.data;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));
       setUser(userData);
       return userData;
     } catch (err) {
-      throw err;
+      // Re-throw the error to be caught by the component
+      throw err; 
     }
   };
 
@@ -36,9 +40,6 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // --- FIX: ADD THIS NEW FUNCTION ---
-  // This function is the key. It updates the user state in the context
-  // AND updates the user data in localStorage to keep them in sync.
   const updateUserInContext = (newUserData) => {
     setUser(newUserData);
     localStorage.setItem("user", JSON.stringify(newUserData));
@@ -47,10 +48,10 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    setUser, // Keep for direct manipulation if needed
+    setUser,
     login,
     logout,
-    updateUserInContext, // Provide the new function to the rest of the app
+    updateUserInContext,
   };
 
   return (
