@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { loginApi } from "../api/authApi";
-import { customerLoginApi } from "../api/customerAuthApi"; // Import customer login API
+import { customerLoginApi } from "../api/customerAuthApi";
 
 const AuthContext = createContext();
 
@@ -17,7 +17,6 @@ const getInitialUser = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(getInitialUser());
 
-  // MODIFIED: This function can now handle different login types
   const login = async (email, password, type = 'portal') => {
     try {
       const apiToCall = type === 'customer' ? customerLoginApi : loginApi;
@@ -29,7 +28,6 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (err) {
-      // Re-throw the error to be caught by the component
       throw err; 
     }
   };
@@ -44,7 +42,6 @@ export const AuthProvider = ({ children }) => {
     setUser(newUserData);
     localStorage.setItem("user", JSON.stringify(newUserData));
   };
-
 
   const value = {
     user,

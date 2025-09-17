@@ -9,7 +9,7 @@ const ChangePassword = () => {
   const [formData, setFormData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [visibility, setVisibility] = useState({}); // State for multiple password fields
+  const [visibility, setVisibility] = useState({});
   const navigate = useNavigate();
 
   const toggleVisibility = (field) => setVisibility(prev => ({ ...prev, [field]: !prev[field] }));
@@ -34,19 +34,19 @@ const ChangePassword = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-ynch-6 bg-white rounded-xl shadow-lg">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
         <h1 className="text-2xl font-bold text-center text-gray-800">Change Password</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
-            <input type={visibility.old ? 'text' : 'password'} name="oldPassword" placeholder="Old Password" value={formData.oldPassword} onChange={handleChange} className="w-full px-4 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <input type={visibility.old ? 'text' : 'password'} name="oldPassword" placeholder="Old Password" value={formData.oldPassword} onChange={handleChange} className="w-full px-4 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autoComplete="current-password" required />
             <button type="button" onClick={() => toggleVisibility('old')} className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">{visibility.old ? <EyeOffIcon /> : <EyeIcon />}</button>
           </div>
           <div className="relative">
-            <input type={visibility.new ? 'text' : 'password'} name="newPassword" placeholder="New Password" value={formData.newPassword} onChange={handleChange} className="w-full px-4 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <input type={visibility.new ? 'text' : 'password'} name="newPassword" placeholder="New Password" value={formData.newPassword} onChange={handleChange} className="w-full px-4 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autoComplete="new-password" required />
             <button type="button" onClick={() => toggleVisibility('new')} className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">{visibility.new ? <EyeOffIcon /> : <EyeIcon />}</button>
           </div>
           <div className="relative">
-            <input type={visibility.confirm ? 'text' : 'password'} name="confirmPassword" placeholder="Confirm New Password" value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            <input type={visibility.confirm ? 'text' : 'password'} name="confirmPassword" placeholder="Confirm New Password" value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 text-gray-700 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" autoComplete="new-password" required />
             <button type="button" onClick={() => toggleVisibility('confirm')} className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">{visibility.confirm ? <EyeOffIcon /> : <EyeIcon />}</button>
           </div>
           {message && (<p className={`text-sm text-center ${isError ? 'text-red-500' : 'text-green-500'}`}>{message}</p>)}

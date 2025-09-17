@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getBills } from "../api/billingApi";
 
-// A new component for the illustration
 const BillingIllustration = () => (
   <div className="text-center p-8">
     <svg className="w-full max-w-sm mx-auto" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -45,14 +44,10 @@ const Billing = () => {
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Billing History</h1>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Left Side: Illustration */}
         <div className="bg-white p-6 rounded-xl shadow-lg hidden lg:block">
           <BillingIllustration />
         </div>
-
-        {/* Right Side: Recent Bills List */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">Recent Bills</h2>
           {loading ? (
@@ -62,7 +57,8 @@ const Billing = () => {
               {bills.map(bill => (
                 <li key={bill.id} className="p-3 flex justify-between items-center rounded-lg transition-colors hover:bg-gray-50">
                   <div>
-                    <p className="font-semibold text-sm text-gray-500">Bill ID: {bill.id.substring(0, 15)}...</p>
+                    {/* MODIFIED: Display the new invoice_id from the database */}
+                    <p className="font-semibold text-sm text-gray-700">{bill.invoice_id}</p>
                     <p className="text-xl font-bold text-gray-800">Total: ₹{parseFloat(bill.total_amount).toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-4">

@@ -22,3 +22,9 @@ export const getProductsByCategory = async (category) => {
     const { data } = await publicApi.get(`/products/category/${category}`);
     return data;
 };
+
+// ADD THIS NEW FUNCTION
+export const getPublicProductById = async (id) => {
+    const { data } = await publicApi.get(`/product/${id}`);
+    return data;
+};

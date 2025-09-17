@@ -32,6 +32,7 @@ const BillDetails = () => {
   };
 
   const downloadPdf = () => {
+    if (!bill) return;
     const doc = new jsPDF();
     
     doc.setFontSize(22);
@@ -41,7 +42,8 @@ const BillDetails = () => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text("NEXUS Electronics", 14, 35);
-    doc.text(`Invoice #: ${bill.id}`, 200, 35, { align: "right" });
+    // Use the bill_no directly from the database
+    doc.text(`Invoice ID: ${bill.bill_no}`, 200, 35, { align: "right" });
     doc.text("Bill To: Valued Customer", 14, 40);
     doc.text(`Date: ${new Date(bill.created_at).toLocaleDateString()}`, 200, 40, { align: "right" });
 
@@ -49,7 +51,7 @@ const BillDetails = () => {
       html: '#bill-table',
       startY: 50,
       theme: 'striped',
-      headStyles: { fillColor: [30, 41, 59] }, // slate-800
+      headStyles: { fillColor: [30, 41, 59] },
     });
     
     const finalY = doc.lastAutoTable.finalY;
@@ -65,7 +67,8 @@ const BillDetails = () => {
     doc.text(`TOTAL:`, 150, finalY + 25, { align: "right" });
     doc.text(`₹${parseFloat(bill.total_amount).toFixed(2)}`, 200, finalY + 25, { align: "right" });
     
-    doc.save(`Invoice-${bill.id.substring(0, 8)}.pdf`);
+    // Update the PDF filename
+    doc.save(`Invoice-${bill.bill_no}.pdf`);
   };
 
   if (loading) {
@@ -89,24 +92,22 @@ const BillDetails = () => {
     <div className="bg-slate-800 min-h-screen p-4 sm:p-8 font-sans">
       <div className="max-w-4xl mx-auto bg-white p-8 sm:p-12 rounded-lg shadow-2xl print-container relative overflow-hidden">
         
-        {/* --- Watermark --- */}
         <div className="absolute -top-16 -left-12 text-gray-100 text-[12rem] font-bold opacity-30 select-none pointer-events-none">
           NEXUS
         </div>
 
-        {/* --- Header --- */}
         <header className="flex justify-between items-center z-10 relative">
           <div>
             <h1 className="text-4xl font-bold text-slate-800">Invoice</h1>
             <p className="text-slate-500">NEXUS Electronics</p>
           </div>
           <div className="text-right">
-            <h2 className="text-xl font-semibold text-slate-700">Invoice #</h2>
-            <p className="font-mono text-slate-500">{bill.id}</p>
+            {/* Display the bill_no directly from the database */}
+            <h2 className="text-xl font-semibold text-slate-700">Invoice ID: {bill.bill_no}</h2>
+            <p className="font-mono text-xs text-slate-400">Ref (UUID): {bill.id}</p>
           </div>
         </header>
 
-        {/* --- Details & Paid Stamp --- */}
         <section className="flex justify-between items-end mt-12 z-10 relative">
           <div>
             <p className="font-semibold text-slate-600">Bill To:</p>
@@ -121,7 +122,6 @@ const BillDetails = () => {
           </div>
         </section>
 
-        {/* --- Items Table --- */}
         <section className="mt-8 z-10 relative">
           <table id="bill-table" className="w-full text-left">
             <thead className="bg-slate-800 text-white text-sm">
@@ -133,7 +133,7 @@ const BillDetails = () => {
               </tr>
             </thead>
             <tbody>
-              {bill.items.map((item, index) => (
+              {bill.items && bill.items.map((item, index) => (
                 <tr key={index}>
                   <td className="p-3 border-b border-slate-200 font-medium">{item.name}</td>
                   <td className="p-3 border-b border-slate-200 text-center">{item.quantity}</td>
@@ -145,7 +145,6 @@ const BillDetails = () => {
           </table>
         </section>
 
-        {/* --- Totals --- */}
         <section className="mt-6 flex justify-end z-10 relative">
           <div className="w-full max-w-sm space-y-2 text-slate-600">
             <div className="flex justify-between">
@@ -162,10 +161,8 @@ const BillDetails = () => {
             </div>
           </div>
         </section>
-
       </div>
 
-      {/* --- Action Buttons --- */}
       <div className="text-center mt-8 space-x-4 no-print">
         <Link to="/billing" className="px-6 py-2.5 rounded-lg font-semibold text-slate-400 bg-slate-700 hover:bg-slate-600 transition">
           Back

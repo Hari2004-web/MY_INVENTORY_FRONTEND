@@ -39,6 +39,7 @@ const Login = () => {
             className="w-full px-4 py-3 text-white bg-slate-900/50 border border-slate-700 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
           <div className="relative">
@@ -49,6 +50,7 @@ const Login = () => {
               className="w-full px-4 py-3 text-white bg-slate-900/50 border border-slate-700 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               required
             />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 hover:text-cyan-400">
