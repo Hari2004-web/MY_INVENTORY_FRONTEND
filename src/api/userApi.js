@@ -5,11 +5,32 @@ export const getUsers = async () => {
   return data;
 };
 
+// --- MODIFIED FUNCTION ---
+// The password is no longer sent from the frontend when creating a user.
 export const createUser = async (userData) => {
-  const { data } = await API.post("/users", userData);
-  return data;
-};
+  const payload = {
+    username: userData.username,
+    email: userData.email,
+    role: userData.role,
+  };
 
+
+ // const { data } = await API.post("/users", payload);
+ 
+//   await this.sendpasswordlink(userData.email);
+
+ // return data;
+// 
+//};
+
+
+// sendpasswordlink (){
+
+// 
+}
+
+
+// ... (the rest of the file remains the same)
 export const updateUser = async (id, userData) => {
   const { data } = await API.put(`/users/${id}`, userData);
   return data;
@@ -29,7 +50,6 @@ export const sendMessage = async (messageData) => {
   return data;
 };
 
-// This function correctly uses FormData for the single image file.
 export const uploadAvatar = async (file) => {
   const formData = new FormData();
   formData.append('avatar', file);
@@ -41,22 +61,17 @@ export const uploadAvatar = async (file) => {
   });
   return data;
 };
-// ... (keep all your existing functions)
 
-// ADD THIS NEW FUNCTION
 export const updateProfile = async (userData) => {
-  // We are sending { username: "newUsername" }
   const { data } = await API.put("/users/profile", userData);
   return data;
 };
 
-// ADD THIS NEW FUNCTION at the end of the file
 export const getCustomerHistory = async (id) => {
   const { data } = await API.get(`/users/customers/${id}/history`);
   return data;
 };
 
-// NEW: This function calls the correct endpoint for fetching customers
 export const getCustomers = async () => {
   const { data } = await API.get("/users/customers");
   return data;

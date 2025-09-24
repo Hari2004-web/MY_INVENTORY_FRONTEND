@@ -23,7 +23,15 @@ export const loginApi = async (credentials) => {
   }
 };
 
-// ADD THE TWO MISSING FUNCTIONS BELOW
+// --- ADD THIS NEW FUNCTION ---
+export const setPasswordApi = async (token, password) => {
+  try {
+    const res = await API.post(`/set-password/${token}`, { password });
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || { message: "Failed to set password" };
+  }
+};
 
 export const forgotPasswordApi = async (email) => {
   try {
@@ -34,9 +42,18 @@ export const forgotPasswordApi = async (email) => {
   }
 };
 
-export const resetPasswordApi = async (token, password) => {
+export const resetPasswordApi = async (data) => {
   try {
-    const res = await API.post(`/reset-password/${token}`, { password });
+    const res = await API.post(`/reset-password`, data);
+    return res.data;
+  } catch (err) {
+    throw err.response?.data || { message: "Request failed" };
+  }
+};  
+
+export const verifyOtpApi = async (data) => {
+  try {
+    const res = await API.post("/verify-otp", data);
     return res.data;
   } catch (err) {
     throw err.response?.data || { message: "Request failed" };

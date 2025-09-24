@@ -6,9 +6,11 @@ export const getMyMessages = async () => {
 };
 
 export const sendMessage = async (messageData) => {
-  const { data } = await API.post("/messages", messageData);
+  // FIX: Changed the endpoint from "/messages" to the correct "/users/send-message"
+  const { data } = await API.post("/users/send-message", messageData);
   return data;
 };
+
 export const markMessageAsRead = async (messageId) => {
   const { data } = await API.put(`/messages/${messageId}/read`);
   return data;

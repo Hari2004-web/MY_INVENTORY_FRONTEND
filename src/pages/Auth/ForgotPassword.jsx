@@ -1,21 +1,26 @@
 import { useState } from "react";
 import { forgotPasswordApi } from "../../api/authApi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const navigate = useNavigate();
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setIsError(false);
     try {
+      // The API call returns the whole response, we just need the message from its data
       const response = await forgotPasswordApi(email);
       setMessage(response.message || "If an account with that email exists, a reset link has been sent.");
+      setIsError(false); // Ensure isError is false on success
+      navigate(`/verify-otp?email=${email}`); // Navigate to the OTP verification page
     } catch (error) {
       setIsError(true);
+      // Use the error's message property, which is set up in your api file
       setMessage(error.message || "An error occurred.");
     }
   };
@@ -33,6 +38,7 @@ const ForgotPassword = () => {
             className="w-full px-4 py-2 border rounded-lg"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
           {message && <p className={`text-sm text-center ${isError ? 'text-red-600' : 'text-green-600'}`}>{message}</p>}
@@ -40,7 +46,7 @@ const ForgotPassword = () => {
             Send Reset Link
           </button>
         </form>
-         <div className="text-sm text-center">
+         <div className="text-sm text-center mt-4">
             <Link to="/login" className="font-medium text-blue-600 hover:underline">
               Back to Login
             </Link>

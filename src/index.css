@@ -43,3 +43,27 @@ body {
     display: none;
   }
 }
+
+/* ... at the end of your existing file ... */
+
+/* For the grid background pattern */
+.bg-grid-pattern {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Custom animations for the new design */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 1s ease-out forwards; }
+.animate-fadeInUp { animation: fadeInUp 0.8s ease-out forwards; }
+.delay-200 { animation-delay: 200ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-600 { animation-delay: 600ms; }

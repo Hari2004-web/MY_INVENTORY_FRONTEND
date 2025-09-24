@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { uploadAvatar, updateProfile } from '../api/userApi'; // Import updateProfile
+import { uploadAvatar, updateProfile } from '../api/userApi';
 
-// Add some icons for the UI
 const EditIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd"></path></svg>;
 const SaveIcon = () => <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>;
 
@@ -12,12 +11,9 @@ const Profile = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-
-  // State for editing the username
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [username, setUsername] = useState(user?.username || '');
 
-  // This ensures that if the user context ever changes, the local state updates too.
   useEffect(() => {
     setUsername(user?.username || '');
   }, [user?.username]);
@@ -47,12 +43,10 @@ const Profile = () => {
     }
   };
 
-  // Function to handle saving the new username
   const handleSaveUsername = async () => {
-    // Trim whitespace and check if the username is empty or unchanged
     if (username.trim() === '' || username.trim() === user.username) {
-        setIsEditingUsername(false); // Just cancel if name is empty or unchanged
-        setUsername(user.username); // Reset to original name
+        setIsEditingUsername(false);
+        setUsername(user.username);
         return;
     }
     try {
@@ -64,7 +58,6 @@ const Profile = () => {
     } catch (error) {
         setMessage(error.response?.data?.message || "Failed to update username.");
         setIsError(true);
-        // On failure, revert the input field to the original username
         setUsername(user.username);
     }
   };
@@ -84,7 +77,6 @@ const Profile = () => {
             className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
           />
           
-          {/* --- USERNAME EDITING SECTION --- */}
           <div className="text-center">
             {isEditingUsername ? (
               <div className="flex items-center gap-2">
@@ -93,6 +85,7 @@ const Profile = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="text-xl font-semibold text-center border-b-2 border-blue-500 focus:outline-none"
+                  autoComplete="username"
                   autoFocus
                 />
                 <button onClick={handleSaveUsername} className="text-green-500 hover:text-green-700 p-1">
@@ -110,7 +103,6 @@ const Profile = () => {
             <p className="text-gray-500">{user?.email}</p>
           </div>
 
-          {/* --- AVATAR UPLOAD SECTION --- */}
           <div className="w-full pt-4 border-t">
             <label className="block text-sm font-medium text-gray-700 mb-2">Update Profile Picture</label>
             <div className="flex items-center space-x-2">

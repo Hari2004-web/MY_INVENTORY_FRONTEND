@@ -17,6 +17,7 @@ import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
+import SetPassword from "./pages/Auth/setPassword"; // The component for the new password page
 import ChangePassword from "./pages/Auth/ChangePassword";
 import Dashboard from "./pages/Dashboard";
 import BillingDashboard from "./pages/BillingDashboard";
@@ -36,6 +37,7 @@ import Wishlist from "./pages/shop/Wishlist";
 import ShopProductDetail from "./pages/shop/ShopProductDetail";
 import CustomerLogin from "./pages/shop/CustomerLogin";
 import CustomerRegister from "./pages/shop/CustomerRegister";
+import VerifyOtp from "./pages/Auth/VerifyOtp"; 
 
 
 // --- PROTECTED ROUTE AND LAYOUT LOGIC ---
@@ -101,14 +103,17 @@ function App() {
               <Route path="/shop/product/:id" element={<ShopProductDetail />} />
               <Route path="/customer/login" element={<CustomerLogin />} />
               <Route path="/customer/register" element={<CustomerRegister />} />
-              {/* FIX: Moved the Wishlist route here */}
               <Route path="/wishlist" element={<Wishlist />} />
 
               {/* --- PUBLIC PORTAL AUTH ROUTES --- */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-otp" element={<VerifyOtp />} />
+              {/* This is the new route for managers to set their password */}
+              <Route path="/set-password/:token" element={<SetPassword />} />
+
 
               {/* --- PROTECTED ROUTES --- */}
               <Route element={<ProtectedRoute><RoleBasedLayout /></ProtectedRoute>}>
@@ -125,7 +130,6 @@ function App() {
                 <Route path="customers/:id" element={<CustomerDetails />} />
                 <Route path="billing" element={<Billing />} />
                 <Route path="bill/:id" element={<BillDetails />} />
-                {/* FIX: Removed the Wishlist route from this protected section */}
               </Route>
             </Routes>
           </WishlistProvider>

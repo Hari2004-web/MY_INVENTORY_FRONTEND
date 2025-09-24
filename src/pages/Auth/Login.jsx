@@ -27,16 +27,16 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl border border-cyan-500/20">
-        <h1 className="text-3xl font-bold text-center text-white">Welcome</h1>
-        <p className="text-center text-slate-300">Sign in to access your portal</p>
+    <div className="flex items-center justify-center min-h-screen p-4 bg-light">
+      <div className="w-full max-w-sm p-8 space-y-6 bg-white rounded-lg shadow-lg">
+        <h1 className="text-3xl font-bold text-center text-dark">Welcome Back</h1>
+        <p className="text-center text-secondary">Sign in to access your portal</p>
         <form onSubmit={handleSubmit} className="space-y-6">
           <input
             type="email"
             name="email"
             placeholder="Email Address"
-            className="w-full px-4 py-3 text-white bg-slate-900/50 border border-slate-700 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            className="w-full px-4 py-3 text-dark bg-slate-100 border border-slate-200 rounded-lg placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
@@ -47,21 +47,21 @@ const Login = () => {
               type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Password"
-              className="w-full px-4 py-3 text-white bg-slate-900/50 border border-slate-700 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="w-full px-4 py-3 text-dark bg-slate-100 border border-slate-200 rounded-lg placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               required
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 hover:text-cyan-400">
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center px-4 text-secondary hover:text-primary">
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
           </div>
-          {error && <p className="text-sm text-fuchsia-400 text-center">{error.message}</p>}
+          {error && <p className="text-sm text-danger text-center">{error.message}</p>}
           <Button type="submit" className="w-full py-3">Login</Button>
         </form>
         <div className="text-center">
-          <Link to="/forgot-password" className="text-sm text-slate-300 hover:text-cyan-400">Forgot Password?</Link>
+          <Link to="/forgot-password" className="text-sm text-secondary hover:text-primary">Forgot Password?</Link>
         </div>
       </div>
     </div>

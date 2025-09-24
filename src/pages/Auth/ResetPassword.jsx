@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { resetPasswordApi } from "../../api/authApi";
 
 const ResetPassword = () => {
@@ -7,8 +7,10 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const { token } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const email = new URLSearchParams(location.search).get("email");
+  const otp = new URLSearchParams(location.search).get("otp");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ const ResetPassword = () => {
       return;
     }
     try {
-      const response = await resetPasswordApi(token, password);
+      const response = await resetPasswordApi({ email, otp, password });
       setMessage(response.message);
       setTimeout(() => navigate('/login'), 3000);
     } catch (error) {
@@ -41,6 +43,7 @@ const ResetPassword = () => {
             className="w-full px-4 py-2 border rounded-lg"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
             required
           />
           <input
@@ -50,6 +53,7 @@ const ResetPassword = () => {
             className="w-full px-4 py-2 border rounded-lg"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
             required
           />
           {message && <p className={`text-sm text-center ${isError ? 'text-red-600' : 'text-green-600'}`}>{message}</p>}
