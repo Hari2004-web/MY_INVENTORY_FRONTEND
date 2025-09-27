@@ -1,3 +1,5 @@
+// src/pages/Products.jsx
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts, createProduct, deleteProduct } from "../api/productApi";
@@ -5,7 +7,7 @@ import Modal from "../components/modals";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/Button";
 
-// --- Icon Components for ProductCard ---
+// ... (Icon components remain the same)
 const EditIcon = () => <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>;
 const DeleteIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>;
 
@@ -55,15 +57,18 @@ const Products = () => {
   const [imageFile, setImageFile] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+  const [activeCategory, setActiveCategory] = useState(''); // State for active category
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (category = '') => {
     try {
-        const response = await getProducts();
+        const response = await getProducts(category);
         setProducts(response.data || []);
+        setActiveCategory(category);
     } catch(error) {
         console.error("Failed to fetch products", error)
     }
   };
+  
   useEffect(() => { fetchProducts(); }, []);
 
   const handleOpenAddModal = () => {
@@ -81,7 +86,7 @@ const Products = () => {
     if (productToDelete) {
       try {
         await deleteProduct(productToDelete);
-        fetchProducts();
+        fetchProducts(activeCategory); // Refetch with the current category
       } catch (error) {
         console.error("Failed to delete product:", error);
       } finally {
@@ -103,9 +108,16 @@ const Products = () => {
     
     await createProduct(productData);
 
-    fetchProducts();
+    fetchProducts(activeCategory);
     setIsFormModalOpen(false);
   };
+  
+  const categories = [
+    { label: 'All', value: '' },
+    { label: 'Laptops', value: 'laptops' },
+    { label: 'Mobiles', value: 'mobiles' },
+    { label: 'Gadgets', value: 'electronic gadgets' }
+  ];
 
   return (
     <div className="p-6">
@@ -117,6 +129,26 @@ const Products = () => {
           </Button>
         )}
       </div>
+
+      {/* --- Category Filter Buttons --- */}
+      <div className="flex justify-center mb-8">
+          <div className="flex flex-wrap justify-center gap-2 bg-slate-200 p-2 rounded-full">
+              {categories.map(cat => (
+                  <button
+                      key={cat.value}
+                      onClick={() => fetchProducts(cat.value)}
+                      className={`px-6 py-2 rounded-full text-sm font-semibold transition-colors ${
+                          activeCategory === cat.value
+                              ? 'bg-blue-600 text-white'
+                              : 'text-slate-600 hover:bg-slate-300'
+                          }`}
+                  >
+                      {cat.label}
+                  </button>
+              ))}
+          </div>
+      </div>
+
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {products.map((p) => (

@@ -1,14 +1,18 @@
+// src/pages/Managers.jsx
+
 import { useState, useEffect } from "react";
 import { getUsers, createUser, updateUser, deleteUser } from "../api/userApi";
 import { sendMessage } from "../api/messageApi";
 import Modal from "../components/modals";
 import toast from 'react-hot-toast';
+import Button from "../components/Button";
+
 
 const Managers = () => {
   const [managers, setManagers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // 1. Remove password from the initial state
-  const [currentUser, setCurrentUser] = useState({ username: '', email: '', role: 'manager' });
+  // 1. Add 'password' to the initial state for creating a new user
+  const [currentUser, setCurrentUser] = useState({ username: '', email: '', password: '', role: 'manager' });
   const [isEditing, setIsEditing] = useState(false);
   
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
@@ -30,8 +34,8 @@ const Managers = () => {
 
   const handleOpenModal = (user = null) => {
     setIsEditing(!!user);
-    // 2. Adjust state for adding a new user
-    setCurrentUser(user ? { ...user } : { username: '', email: '', role: 'manager' });
+    // 2. Adjust state for adding a new user, ensuring password is included
+    setCurrentUser(user ? { ...user } : { username: '', email: '', password: '', role: 'manager' });
     setIsModalOpen(true);
   };
 
@@ -42,12 +46,13 @@ const Managers = () => {
     e.preventDefault();
     try {
       if (isEditing) {
+        // No changes to the update logic needed
         await updateUser(currentUser.id, { username: currentUser.username, email: currentUser.email, role: currentUser.role });
         toast.success("User updated successfully!");
       } else {
-        // The 'createUser' API now sends the invitation email
+        // 3. The 'createUser' API will now send the full user object including the password
         await createUser(currentUser);
-        toast.success("Invitation email sent successfully!");
+        toast.success("Manager created successfully!");
       }
       fetchUsers();
       handleCloseModal();
@@ -67,7 +72,7 @@ const Managers = () => {
             await deleteUser(id);
             toast.success("User deleted successfully.");
             fetchUsers();
-       } catch (error) {
+       } catch {
             toast.error("Failed to delete user.");
        }
     }
@@ -127,7 +132,19 @@ const Managers = () => {
           <input type="text" name="username" placeholder="Username" value={currentUser.username} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
           <input type="email" name="email" placeholder="Email" value={currentUser.email} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
           
-          {/* 3. The password field is now removed for non-editing mode */}
+          {/* 4. Add the password input field, only shown when creating a new user */}
+          {!isEditing && (
+            <input 
+              type="password" 
+              name="password" 
+              placeholder="Password" 
+              value={currentUser.password} 
+              onChange={handleChange} 
+              className="w-full p-2 border rounded-lg" 
+              required 
+              autoComplete="new-password"
+            />
+          )}
           
           <div>
             <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
@@ -138,7 +155,8 @@ const Managers = () => {
           </div>
 
           <button type="submit" className="w-full bg-green-600 text-white p-2 rounded-md">
-            {isEditing ? "Save Changes" : "Send Invitation"}
+            {/* 5. Change the button text */}
+            {isEditing ? "Save Changes" : "Create User"}
           </button>
         </form>
       </Modal>

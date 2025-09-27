@@ -1,35 +1,22 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getBills } from "../api/billingApi";
-
-const BillingIllustration = () => (
-  <div className="text-center p-8">
-    <svg className="w-full max-w-sm mx-auto" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="40" y="20" width="120" height="160" rx="8" fill="#F3F4F6"/>
-      <rect x="52" y="40" width="96" height="6" rx="3" fill="#D1D5DB"/>
-      <rect x="52" y="56" width="60" height="6" rx="3" fill="#D1D5DB"/>
-      <rect x="52" y="80" width="96" height="4" rx="2" fill="#E5E7EB"/>
-      <rect x="52" y="90" width="96" height="4" rx="2" fill="#E5E7EB"/>
-      <rect x="52" y="100" width="70" height="4" rx="2" fill="#E5E7EB"/>
-      <rect x="130" y="120" width="18" height="4" rx="2" fill="#9CA3AF"/>
-      <rect x="52" y="140" width="96" height="8" rx="4" fill="#60A5FA"/>
-      <path d="M85 5H115L110 20H90L85 5Z" fill="#3B82F6"/>
-      <circle cx="130" cy="55" r="12" fill="#fff"/>
-      <path d="M126 52L130 56L134 52" stroke="#34D399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M130 56V60" stroke="#34D399" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-    <h3 className="text-xl font-semibold text-gray-700 mt-6">View Your Past Invoices</h3>
-    <p className="text-gray-500 mt-2">Select any bill from the list to view its details or print a copy.</p>
-  </div>
-);
+import Button from "../components/Button";
+import Loader from "../components/Loader";
 
 const Billing = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // --- STATE FOR SEARCH AND PAGINATION ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage] = useState(10);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const billResponse = await getBills();
         setBills(billResponse.data || []);
       } catch (error) {
@@ -41,38 +28,108 @@ const Billing = () => {
     fetchData();
   }, []);
 
+  // --- FILTERING LOGIC ---
+  const filteredBills = bills.filter(bill =>
+    bill.bill_no?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // --- PAGINATION LOGIC ---
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = filteredBills.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(filteredBills.length / rowsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Billing History</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div className="bg-white p-6 rounded-xl shadow-lg hidden lg:block">
-          <BillingIllustration />
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">Recent Bills</h2>
-          {loading ? (
-            <p className="text-gray-500 text-center py-8">Loading bills...</p>
-          ) : (
-            <ul className="space-y-2">
-              {bills.map(bill => (
-                <li key={bill.id} className="p-3 flex justify-between items-center rounded-lg transition-colors hover:bg-gray-50">
-                  <div>
-                    {/* MODIFIED: Display the new invoice_id from the database */}
-                    <p className="font-semibold text-sm text-gray-700">{bill.invoice_id}</p>
-                    <p className="text-xl font-bold text-gray-800">Total: ₹{parseFloat(bill.total_amount).toFixed(2)}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <p className="text-sm text-gray-500">{new Date(bill.created_at).toLocaleDateString()}</p>
-                    <Link to={`/bill/${bill.id}`} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-300 transition-colors">
-                      View
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Billing History</h1>
+        <div className="flex items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search by Invoice ID..."
+            className="w-full max-w-xs px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reset to first page on new search
+            }}
+          />
         </div>
       </div>
+
+      {/* --- DATA TABLE --- */}
+      <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="p-4 font-semibold text-gray-600">Invoice ID</th>
+                <th className="p-4 font-semibold text-gray-600">Date</th>
+                <th className="p-4 font-semibold text-gray-600 text-right">Total Amount</th>
+                <th className="p-4 font-semibold text-gray-600 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentRows.length > 0 ? currentRows.map((bill) => (
+                <tr key={bill.id} className="border-b hover:bg-gray-50">
+                  <td className="p-4 font-semibold text-sm text-gray-800">{bill.bill_no}</td>
+                  <td className="p-4 text-gray-600">{new Date(bill.created_at).toLocaleDateString()}</td>
+                  <td className="p-4 text-right font-semibold text-gray-800">₹{parseFloat(bill.total_amount).toFixed(2)}</td>
+                  <td className="p-4 text-center">
+                    <Link
+                      to={`/bill/${bill.id}`}
+                      className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md text-sm font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="4" className="p-8 text-center text-gray-500">
+                    No bills found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* --- PAGINATION CONTROLS --- */}
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-6">
+          <span className="text-sm text-gray-600">
+            Showing {indexOfFirstRow + 1} to {Math.min(indexOfLastRow, filteredBills.length)} of {filteredBills.length} records
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="font-semibold">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

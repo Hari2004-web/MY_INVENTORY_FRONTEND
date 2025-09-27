@@ -33,19 +33,28 @@ const Inbox = () => {
     fetchMessages();
   }, []);
 
-  const handleSelectMessage = async (message) => {
-    setSelectedMessage(message);
+  const handleSelectMessage = (message) => {
+    // Immediately update the state for the selected message to display its content
+    setSelectedMessage({ ...message, is_read: 1 });
+
+    // If the message was originally unread, update the list and notify the backend
     if (!message.is_read) {
-      try {
-        await markMessageAsRead(message.id);
-        setMessages(prevMessages =>
-          prevMessages.map(m =>
-            m.id === message.id ? { ...m, is_read: 1 } : m
-          )
-        );
-      } catch (error) {
-        console.error("Failed to mark message as read:", error);
-      }
+      // Update the main message list to change the visual state (e.g., remove the 'unread' dot)
+      setMessages(prevMessages =>
+        prevMessages.map(m =>
+          m.id === message.id ? { ...m, is_read: 1 } : m
+        )
+      );
+
+      // Call the API in the background to persist the change without blocking the UI
+      (async () => {
+        try {
+          await markMessageAsRead(message.id);
+        } catch (error) {
+          console.error("Failed to mark message as read on the server:", error);
+          // Optional: You could add logic here to revert the UI change if the API call fails
+        }
+      })();
     }
   };
 

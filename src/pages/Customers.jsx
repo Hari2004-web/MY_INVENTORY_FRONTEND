@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getCustomers } from "../api/userApi";
 import toast from 'react-hot-toast';
+import Button from "../components/Button";
 
 const Customers = () => {
   // --- STATE MANAGEMENT ---

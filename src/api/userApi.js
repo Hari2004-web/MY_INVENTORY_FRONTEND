@@ -1,3 +1,5 @@
+// src/api/userApi.js
+
 import API from "../utils/fetchWrapper";
 
 export const getUsers = async () => {
@@ -6,29 +8,11 @@ export const getUsers = async () => {
 };
 
 // --- MODIFIED FUNCTION ---
-// The password is no longer sent from the frontend when creating a user.
+// Now sends the full user object, including the password.
 export const createUser = async (userData) => {
-  const payload = {
-    username: userData.username,
-    email: userData.email,
-    role: userData.role,
-  };
-
-
- // const { data } = await API.post("/users", payload);
- 
-//   await this.sendpasswordlink(userData.email);
-
- // return data;
-// 
-//};
-
-
-// sendpasswordlink (){
-
-// 
-}
-
+  const { data } = await API.post("/users", userData);
+  return data;
+};
 
 // ... (the rest of the file remains the same)
 export const updateUser = async (id, userData) => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCustomerHistory } from "../api/userApi";
 import toast from 'react-hot-toast';
+import Button from "../components/Button";
 
 const CustomerDetails = () => {
   // --- STATE MANAGEMENT ---
@@ -65,7 +66,7 @@ const CustomerDetails = () => {
             <tbody>
               {currentRows.length > 0 ? currentRows.map((bill) => (
                 <tr key={bill.id} className="border-b hover:bg-gray-50">
-                  <td className="p-4 font-semibold text-sm text-gray-800">{bill.invoice_id || `BILL-${bill.bill_no}`}</td>
+                  <td className="p-4 font-semibold text-sm text-gray-800">{bill.bill_no || `BILL-${bill.id}`}</td>
                   <td className="p-4 text-gray-600">{new Date(bill.created_at).toLocaleDateString()}</td>
                   <td className="p-4 text-right font-semibold text-gray-800">₹{parseFloat(bill.total_amount).toFixed(2)}</td>
                   <td className="p-4 text-center">

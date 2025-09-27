@@ -1,5 +1,3 @@
-// src/App.jsx
-
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
@@ -17,7 +15,7 @@ import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
-import SetPassword from "./pages/Auth/setPassword"; // The component for the new password page
+// import SetPassword from "./pages/Auth/setPassword"; // No longer needed
 import ChangePassword from "./pages/Auth/ChangePassword";
 import Dashboard from "./pages/Dashboard";
 import BillingDashboard from "./pages/BillingDashboard";
@@ -111,8 +109,8 @@ function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/verify-otp" element={<VerifyOtp />} />
-              {/* This is the new route for managers to set their password */}
-              <Route path="/set-password/:token" element={<SetPassword />} />
+              {/* This route is now removed */}
+              {/* <Route path="/set-password/:token" element={<SetPassword />} /> */}
 
 
               {/* --- PROTECTED ROUTES --- */}

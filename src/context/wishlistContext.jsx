@@ -8,15 +8,38 @@ const WishlistContext = createContext();
 
 export const useWishlist = () => useContext(WishlistContext);
 
+// --- Create and EXPORT the custom hook for actions that need navigation ---
+export const useWishlistActions = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { setWishlist } = useContext(WishlistContext); // Get setWishlist from the context
+
+  const addToWishlist = async (product) => {
+    if (!user) {
+      toast.error("Please log in to add items to your wishlist.");
+      navigate('/customer/login');
+      return;
+    }
+    try {
+      await addToWishlistApi(product.id);
+      // Update the state using the function from the context
+      setWishlist(prev => [...prev, product]);
+      toast.success(`${product.name} added to wishlist!`);
+    } catch (error) {
+      toast.error("Failed to add to wishlist.");
+    }
+  };
+
+  return { addToWishlist };
+};
+
 export const WishlistProvider = ({ children }) => {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchWishlist = async () => {
-      // Only fetch if there is a logged-in user.
       if (user) {
         try {
           setLoading(true);
@@ -28,28 +51,12 @@ export const WishlistProvider = ({ children }) => {
           setLoading(false);
         }
       } else {
-        // If no user, clear the wishlist and stop loading.
         setWishlist([]);
         setLoading(false);
       }
     };
     fetchWishlist();
-  }, [user]); // This dependency correctly re-runs the fetch when the user logs in or out.
-
-  const addToWishlist = async (product) => {
-    if (!user) {
-      toast.error("Please log in to add items to your wishlist.");
-      navigate('/customer/login');
-      return;
-    }
-    try {
-      await addToWishlistApi(product.id);
-      setWishlist(prev => [...prev, product]);
-      toast.success(`${product.name} added to wishlist!`);
-    } catch (error) {
-      toast.error("Failed to add to wishlist.");
-    }
-  };
+  }, [user]);
 
   const removeFromWishlist = async (productId) => {
     try {
@@ -67,8 +74,8 @@ export const WishlistProvider = ({ children }) => {
 
   const value = {
     wishlist,
+    setWishlist, // Expose setWishlist to be used by the custom hook
     loading,
-    addToWishlist,
     removeFromWishlist,
     isInWishlist,
   };

@@ -25,38 +25,54 @@ const StatCard = ({ title, value, icon, isCurrency = false }) => (
   </div>
 );
 
-const WeeklyRevenueChart = ({ stats }) => {
+const WeeklyRevenueChart = ({ bills }) => {
   const chartRef = useRef(null);
-  const [chartData, setChartData] = useState({ datasets: [] });
 
-  useEffect(() => {
-    const chart = chartRef.current;
-    if (!chart) return;
+  const getChartData = () => {
+    const labels = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }).reverse();
 
-    const data = {
-      labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Today'],
+    const dataPoints = labels.map(label => {
+      const date = new Date();
+      const [day, month] = label.split(' ');
+      date.setDate(parseInt(day));
+      // A simple mapping from short month name to month index
+      const monthIndex = new Date(Date.parse(month +" 1, 2024")).getMonth();
+      date.setMonth(monthIndex);
+
+      const dailyTotal = bills
+        .filter(bill => new Date(bill.created_at).toDateString() === date.toDateString())
+        .reduce((sum, bill) => sum + parseFloat(bill.total_amount), 0);
+      return dailyTotal;
+    });
+
+    return {
+      labels,
       datasets: [{
-          label: 'Revenue',
-          data: [12000, 19000, 13000, 15000, 22000, 29000, stats?.revenueToday || 0],
-          borderColor: '#22d3ee',
-          borderWidth: 3,
-          pointBackgroundColor: '#fff',
-          pointBorderColor: '#22d3ee',
-          pointHoverRadius: 7,
-          pointRadius: 5,
-          tension: 0.4,
-          fill: true,
-          backgroundColor: (context) => {
-            const ctx = context.chart.ctx;
-            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(34, 211, 238, 0.3)');
-            gradient.addColorStop(1, 'rgba(34, 211, 238, 0)');
-            return gradient;
-          },
+        label: 'Revenue',
+        data: dataPoints,
+        borderColor: '#22d3ee',
+        borderWidth: 3,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#22d3ee',
+        pointHoverRadius: 7,
+        pointRadius: 5,
+        tension: 0.4,
+        fill: true,
+        backgroundColor: (context) => {
+          const ctx = context.chart.ctx;
+          if (!ctx) return 'rgba(34, 211, 238, 0)';
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, 'rgba(34, 211, 238, 0.3)');
+          gradient.addColorStop(1, 'rgba(34, 211, 238, 0)');
+          return gradient;
+        },
       }],
     };
-    setChartData(data);
-  }, [stats]);
+  };
 
   const options = {
     responsive: true,
@@ -68,7 +84,7 @@ const WeeklyRevenueChart = ({ stats }) => {
     },
   };
 
-  return <Line ref={chartRef} options={options} data={chartData} />;
+  return <Line ref={chartRef} options={options} data={getChartData()} />;
 };
 
 const BillingDashboard = () => {
@@ -107,7 +123,7 @@ const BillingDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         <div className="lg:col-span-2 bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
           <h2 className="text-xl font-bold text-white mb-4">Weekly Revenue Trend</h2>
-          <div className="h-80"><WeeklyRevenueChart stats={stats} /></div>
+          <div className="h-80"><WeeklyRevenueChart bills={recentBills} /></div>
         </div>
         
         <div className="space-y-8">
@@ -118,7 +134,7 @@ const BillingDashboard = () => {
                 <div key={bill.id} className="flex justify-between items-center p-3 rounded-lg hover:bg-slate-700/50 transition-colors">
                   <div>
                     <p className="font-semibold text-white">₹{parseFloat(bill.total_amount).toFixed(2)}</p>
-                    <p className="text-xs text-slate-400 font-mono">{bill.invoice_id}</p>
+                    <p className="text-xs text-slate-400 font-mono">{bill.bill_no}</p>
                   </div>
                   <Link to={`/bill/${bill.id}`} className="text-sm font-semibold text-cyan-400 hover:text-cyan-300">View</Link>
                 </div>
