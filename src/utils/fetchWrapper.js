@@ -8,42 +8,46 @@ const API = axios.create({
 });
 
 // --- Request Interceptor ---
-// This part adds the token to every outgoing request. (No changes here)
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // FIX: If the data being sent is FormData (a file upload),
+  // delete the incorrect global 'Content-Type' header.
+  // This allows the browser to automatically set the correct 'multipart/form-data'
+  // header along with the necessary boundary.
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
+
   return config;
 });
 
 
-// --- FIX: Add a Response Interceptor ---
-// This new part will watch for responses coming back from the API.
+// --- Response Interceptor ---
 API.interceptors.response.use(
-  // If the response is successful (e.g., status 200), just return it.
   (response) => {
     return response;
   },
-  // If the response has an error...
   (error) => {
-    // Check if the error is specifically a 401 (Unauthorized) or 403 (Forbidden).
-    // These statuses indicate a problem with the JWT token.
     if (error.response && [401, 403].includes(error.response.status)) {
       
-      // Remove the invalid token and user data from storage.
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       
-      // Redirect the user to the login page.
-      // The page will reload, effectively logging them out.
-      window.location.href = '/login';
+      const currentPath = window.location.pathname;
+
+      if (currentPath.startsWith('/customer') || currentPath.startsWith('/shop') || currentPath === '/') {
+        window.location.href = '/customer/login';
+      } else {
+        window.location.href = '/auth/login';
+      }
     }
     
-    // For all other errors, just pass them along.
     return Promise.reject(error);
   }
 );
-
 
 export default API;

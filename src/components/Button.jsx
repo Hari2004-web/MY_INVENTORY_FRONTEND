@@ -1,4 +1,6 @@
-const Button = ({ onClick, children, variant = 'primary', type = 'button', className = '' }) => {
+// src/components/Button.jsx
+
+const Button = ({ onClick, children, variant = 'primary', type = 'button', className = '', disabled = false }) => {
   const baseStyle = "inline-flex items-center justify-center px-4 py-2 font-semibold text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
@@ -8,7 +10,7 @@ const Button = ({ onClick, children, variant = 'primary', type = 'button', class
   };
 
   return (
-    <button type={type} onClick={onClick} className={`${baseStyle} ${variants[variant]} ${className}`}>
+    <button type={type} onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
       {children}
     </button>
   );

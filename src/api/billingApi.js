@@ -20,3 +20,25 @@ export const getBillingStats = async () => {
   const { data } = await API.get('/bills/stats');
   return data;
 };
+
+export const createCodOrder = async (billData) => {
+  const { data } = await API.post("/bills/cod", billData);
+  return data;
+};  
+
+export const updateBillStatus = async (id, status) => {
+  const {data} = await API.put(`/bills/${id}/status`,{status});
+  return data;
+}
+
+// --- ADD THIS NEW FUNCTION ---
+export const cancelMyOrder = async (id) => {
+  const { data } = await API.post(`/bills/${id}/cancel`);
+  return data;
+};
+
+export const createWalletOrder = async (billData) => {
+  const { data} = await API.post("/bills/wallet-payment", billData);
+  return data;  
+
+}

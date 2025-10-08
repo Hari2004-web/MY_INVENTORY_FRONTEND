@@ -4,21 +4,24 @@ import { useState, useEffect } from "react";
 import { getUsers, createUser, updateUser, deleteUser } from "../api/userApi";
 import { sendMessage } from "../api/messageApi";
 import Modal from "../components/modals";
+import Button from "../components/Button"; // This import was missing
 import toast from 'react-hot-toast';
-import Button from "../components/Button";
+
+// --- Icon Components for a better UI ---
+const EditIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>;
+const DeleteIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+const MessageIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
 
 
 const Managers = () => {
   const [managers, setManagers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // 1. Add 'password' to the initial state for creating a new user
-  const [currentUser, setCurrentUser] = useState({ username: '', email: '', password: '', role: 'manager' });
+  const [currentUser, setCurrentUser] = useState({ username: '', email: '', role: 'manager' });
   const [isEditing, setIsEditing] = useState(false);
   
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messagingManager, setMessagingManager] = useState(null);
   const [messageData, setMessageData] = useState({ subject: '', body: '' });
-  const [messageStatus, setMessageStatus] = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -34,8 +37,7 @@ const Managers = () => {
 
   const handleOpenModal = (user = null) => {
     setIsEditing(!!user);
-    // 2. Adjust state for adding a new user, ensuring password is included
-    setCurrentUser(user ? { ...user } : { username: '', email: '', password: '', role: 'manager' });
+    setCurrentUser(user ? { ...user } : { username: '', email: '', role: 'manager' });
     setIsModalOpen(true);
   };
 
@@ -44,25 +46,22 @@ const Managers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const loadingToast = toast.loading(isEditing ? 'Updating user...' : 'Sending invitation...');
+    
     try {
       if (isEditing) {
-        // No changes to the update logic needed
         await updateUser(currentUser.id, { username: currentUser.username, email: currentUser.email, role: currentUser.role });
-        toast.success("User updated successfully!");
+        toast.success("User updated successfully!", { id: loadingToast });
       } else {
-        // 3. The 'createUser' API will now send the full user object including the password
         await createUser(currentUser);
-        toast.success("Manager created successfully!");
+        toast.success("Manager created and invitation sent!", { id: loadingToast });
       }
       fetchUsers();
       handleCloseModal();
     } catch (error) {
-      if (error.response && error.response.status === 409) {
-        toast.error(error.response.data.message || "This email is already in use.");
-      } else {
-        toast.error("An error occurred. Please try again.");
-      }
-      console.error("Form submission error:", error);
+      // This is the crucial part: It catches the error from the server (like 409 Conflict)
+      // and displays the specific error message in a user-friendly toast.
+      toast.error(error.response?.data?.message || "An unexpected error occurred.", { id: loadingToast });
     }
   };
 
@@ -81,70 +80,73 @@ const Managers = () => {
   const handleOpenMessageModal = (manager) => {
     setMessagingManager(manager);
     setMessageData({ subject: '', body: '' });
-    setMessageStatus('');
     setIsMessageModalOpen(true);
   };
-
   const handleCloseMessageModal = () => setIsMessageModalOpen(false);
   const handleMessageChange = (e) => setMessageData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    setMessageStatus('Sending...');
+    const loadingToast = toast.loading('Sending message...');
     try {
       const payload = { recipient_id: messagingManager.id, subject: messageData.subject, body: messageData.body };
       await sendMessage(payload);
-      setMessageStatus("Message sent successfully!");
-      setTimeout(() => handleCloseMessageModal(), 2000);
+      toast.success("Message sent successfully!", { id: loadingToast });
+      handleCloseMessageModal();
     } catch (error) {
-      setMessageStatus(error.response?.data?.error || "Failed to send.");
+      toast.error(error.response?.data?.error || "Failed to send message.", { id: loadingToast });
     }
   };
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-semibold">Manage Users</h1>
-        <button onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Add User
-        </button>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-slate-800">Manage Users</h1>
+        <Button onClick={() => handleOpenModal()}>
+          + Add New User
+        </Button>
       </div>
 
-      <ul className="space-y-2">
-        {managers.map((m) => (
-          <li key={m.id} className="bg-white shadow p-3 rounded flex justify-between items-center">
-            <div>
-              <p className="font-semibold">{m.username}</p>
-              <p className="text-sm text-gray-500">{m.email}</p>
-              <p className="text-xs font-bold uppercase text-blue-600 mt-1">{m.role.replace('_', ' ')}</p>
-            </div>
-            <div className="space-x-2">
-              <button onClick={() => handleOpenMessageModal(m)} className="text-sm bg-green-500 text-white px-3 py-1 rounded">Message</button>
-              <button onClick={() => handleOpenModal(m)} className="text-sm bg-yellow-500 text-white px-3 py-1 rounded">Edit</button>
-              <button onClick={() => handleDelete(m.id)} className="text-sm bg-red-600 text-white px-3 py-1 rounded">Delete</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-slate-50 border-b">
+              <tr>
+                <th className="p-4 font-semibold text-slate-600">Username</th>
+                <th className="p-4 font-semibold text-slate-600">Email</th>
+                <th className="p-4 font-semibold text-slate-600">Role</th>
+                <th className="p-4 font-semibold text-slate-600 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {managers.map((manager) => (
+                <tr key={manager.id} className="border-b hover:bg-slate-50">
+                  <td className="p-4 font-medium text-slate-800">{manager.username}</td>
+                  <td className="p-4 text-slate-600">{manager.email}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      manager.role === 'manager' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {manager.role.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="p-4 text-center">
+                    <div className="flex justify-center gap-2">
+                        <button onClick={() => handleOpenMessageModal(manager)} className="text-slate-500 hover:text-blue-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><MessageIcon /></button>
+                        <button onClick={() => handleOpenModal(manager)} className="text-slate-500 hover:text-yellow-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><EditIcon /></button>
+                        <button onClick={() => handleDelete(manager.id)} className="text-slate-500 hover:text-red-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><DeleteIcon /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={isEditing ? "Edit User" : "Add User"}>
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={isEditing ? "Edit User" : "Invite New User"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="text" name="username" placeholder="Username" value={currentUser.username} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
           <input type="email" name="email" placeholder="Email" value={currentUser.email} onChange={handleChange} className="w-full p-2 border rounded-lg" required />
-          
-          {/* 4. Add the password input field, only shown when creating a new user */}
-          {!isEditing && (
-            <input 
-              type="password" 
-              name="password" 
-              placeholder="Password" 
-              value={currentUser.password} 
-              onChange={handleChange} 
-              className="w-full p-2 border rounded-lg" 
-              required 
-              autoComplete="new-password"
-            />
-          )}
           
           <div>
             <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
@@ -154,10 +156,9 @@ const Managers = () => {
             </select>
           </div>
 
-          <button type="submit" className="w-full bg-green-600 text-white p-2 rounded-md">
-            {/* 5. Change the button text */}
-            {isEditing ? "Save Changes" : "Create User"}
-          </button>
+          <Button type="submit" variant="success" className="w-full">
+            {isEditing ? "Save Changes" : "Send Invitation"}
+          </Button>
         </form>
       </Modal>
 
@@ -165,10 +166,9 @@ const Managers = () => {
         <form onSubmit={handleSendMessage} className="space-y-4">
           <input type="text" name="subject" placeholder="Subject" value={messageData.subject} onChange={handleMessageChange} className="w-full p-2 border rounded-lg" required />
           <textarea name="body" rows="4" placeholder="Your message..." value={messageData.body} onChange={handleMessageChange} className="w-full p-2 border rounded-lg" required />
-          {messageStatus && <p className="text-sm text-center">{messageStatus}</p>}
-          <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">
+          <Button type="submit" className="w-full">
             Send Message
-          </button>
+          </Button>
         </form>
       </Modal>
     </div>

@@ -30,7 +30,7 @@ const CustomerRegister = () => {
       <div className="w-full max-w-sm p-8 space-y-6 bg-[#1A1A1A] rounded-2xl shadow-2xl">
         <h1 className="text-3xl font-bold text-center text-white">Create Account</h1>
         <p className="text-center text-slate-300">Join NEXUS to experience the future</p>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"

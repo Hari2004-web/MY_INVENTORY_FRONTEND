@@ -1,3 +1,5 @@
+// src/pages/BillingDashboard.jsx
+
 import { useEffect, useState, useRef } from 'react';
 import { getBills, getBillingStats } from '../api/billingApi';
 import { Link } from 'react-router-dom';
@@ -12,16 +14,18 @@ const RupeeIcon = () => <svg className="w-6 h-6 text-cyan-400" fill="none" viewB
 const BillIcon = () => <svg className="w-6 h-6 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
 const PrintIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>;
 
-
+// --- THIS COMPONENT IS UPDATED ---
 const StatCard = ({ title, value, icon, isCurrency = false }) => (
-  <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 hover:bg-slate-700/50 transition-colors duration-300">
+  <div className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
     <div className="flex items-center justify-between">
       <p className="text-sm font-medium text-slate-400">{title}</p>
       {icon}
     </div>
-    <p className="text-4xl font-bold text-white mt-2">
-      {isCurrency ? `₹${parseFloat(value).toLocaleString('en-IN')}` : value}
-    </p>
+    <div className="flex items-baseline mt-2 overflow-hidden">
+        <p className="text-3xl lg:text-4xl font-bold text-white whitespace-nowrap">
+            {isCurrency && '₹'}{parseFloat(value).toLocaleString('en-IN')}
+        </p>
+    </div>
   </div>
 );
 
@@ -39,7 +43,6 @@ const WeeklyRevenueChart = ({ bills }) => {
       const date = new Date();
       const [day, month] = label.split(' ');
       date.setDate(parseInt(day));
-      // A simple mapping from short month name to month index
       const monthIndex = new Date(Date.parse(month +" 1, 2024")).getMonth();
       date.setMonth(monthIndex);
 
@@ -90,6 +93,7 @@ const WeeklyRevenueChart = ({ bills }) => {
 const BillingDashboard = () => {
   const [stats, setStats] = useState(null);
   const [recentBills, setRecentBills] = useState([]);
+  const [allBills, setAllBills] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -98,6 +102,7 @@ const BillingDashboard = () => {
         const [statsRes, billsRes] = await Promise.all([getBillingStats(), getBills()]);
         setStats(statsRes.data);
         setRecentBills(billsRes.data.slice(0, 5));
+        setAllBills(billsRes.data);
       } catch (error) { console.error("Failed to fetch data:", error); } 
       finally { setLoading(false); }
     };
@@ -108,28 +113,28 @@ const BillingDashboard = () => {
 
   return (
     <div className="bg-slate-900 text-slate-300 min-h-screen p-4 md:p-6 lg:p-8">
-      <div className="mb-8">
+      <div className="mb-10">
         <h1 className="text-4xl font-bold text-white">Billing Dashboard</h1>
         <p className="text-slate-400 mt-1">Live financial overview for {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatCard title="Revenue Today" value={stats?.revenueToday || 0} icon={<RupeeIcon />} isCurrency />
         <StatCard title="Bills Today" value={stats?.billsToday || 0} icon={<BillIcon />} />
         <StatCard title="Total Revenue" value={stats?.totalRevenue || 0} icon={<RupeeIcon />} isCurrency />
         <StatCard title="Total Bills" value={stats?.totalBills || 0} icon={<BillIcon />} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10">
         <div className="lg:col-span-2 bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
           <h2 className="text-xl font-bold text-white mb-4">Weekly Revenue Trend</h2>
-          <div className="h-80"><WeeklyRevenueChart bills={recentBills} /></div>
+          <div className="h-96"><WeeklyRevenueChart bills={allBills} /></div>
         </div>
         
-        <div className="space-y-8">
-          <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+        <div className="flex flex-col gap-8">
+          <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 flex-grow flex flex-col">
             <h2 className="text-xl font-bold text-white mb-4">Recent Transactions</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 flex-grow">
               {recentBills.map(bill => (
                 <div key={bill.id} className="flex justify-between items-center p-3 rounded-lg hover:bg-slate-700/50 transition-colors">
                   <div>

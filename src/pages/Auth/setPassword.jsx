@@ -1,3 +1,5 @@
+// src/pages/Auth/SetPassword.jsx
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { setPasswordApi } from "../../api/authApi";

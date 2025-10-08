@@ -1,3 +1,5 @@
+// src/api/authApi.js
+
 import axios from "axios";
 
 const API = axios.create({
@@ -5,6 +7,7 @@ const API = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// ... (registerApi, loginApi remain the same)
 export const registerApi = async (userData) => {
   try {
     const res = await API.post("/register", userData);
@@ -33,6 +36,7 @@ export const setPasswordApi = async (token, password) => {
   }
 };
 
+// ... (forgotPasswordApi, resetPasswordApi, verifyOtpApi remain the same)
 export const forgotPasswordApi = async (email) => {
   try {
     const res = await API.post("/forgot-password", { email });

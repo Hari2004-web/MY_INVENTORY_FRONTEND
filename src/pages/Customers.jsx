@@ -1,20 +1,18 @@
+// src/pages/Customers.jsx
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getCustomers } from "../api/userApi";
 import toast from 'react-hot-toast';
-import Button from "../components/Button";
 
 const Customers = () => {
-  // --- STATE MANAGEMENT ---
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // New state for search and pagination
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [customersPerPage] = useState(10); // Set to 10 rows per page
+  const [customersPerPage] = useState(10);
 
-  // --- DATA FETCHING ---
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -29,21 +27,25 @@ const Customers = () => {
     fetchCustomers();
   }, []);
 
-  // --- SEARCH AND FILTER LOGIC ---
   const filteredCustomers = customers.filter(customer =>
     customer.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // --- PAGINATION LOGIC ---
+  useEffect(() => {
+    const newTotalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+    if (currentPage > newTotalPages) {
+        setCurrentPage(newTotalPages > 0 ? newTotalPages : 1);
+    }
+  }, [filteredCustomers.length, customersPerPage, currentPage]);
+
   const indexOfLastCustomer = currentPage * customersPerPage;
   const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
   const currentCustomers = filteredCustomers.slice(indexOfFirstCustomer, indexOfLastCustomer);
-  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage) || 1;
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // --- RENDER LOGIC ---
   if (loading) {
     return <div className="p-8 text-center">Loading customer data...</div>;
   }
@@ -59,13 +61,12 @@ const Customers = () => {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setCurrentPage(1); // Reset to first page on new search
+              setCurrentPage(1);
             }}
           />
         </div>
       </div>
 
-      {/* --- DATA TABLE --- */}
       <div className="bg-white shadow-lg rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -102,8 +103,7 @@ const Customers = () => {
         </div>
       </div>
 
-      {/* --- PAGINATION CONTROLS --- */}
-      {totalPages > 1 && (
+      {filteredCustomers.length > customersPerPage && (
         <div className="flex justify-between items-center mt-6">
           <span className="text-sm text-gray-600">
             Showing {indexOfFirstCustomer + 1} to {Math.min(indexOfLastCustomer, filteredCustomers.length)} of {filteredCustomers.length} customers
@@ -121,7 +121,7 @@ const Customers = () => {
             </span>
             <button
               onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage >= totalPages}
               className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next

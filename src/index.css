@@ -1,60 +1,22 @@
+/* src/index.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  @apply bg-gray-50 text-gray-800 antialiased; /* Base styles for the light theme */
+  @apply bg-slate-50 text-slate-800 antialiased;
+  font-family: 'Inter', sans-serif;
 }
 
-/* Custom scrollbar for Webkit browsers (Chrome, Safari) */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  .print-container, .print-container * {
-    visibility: visible;
-  }
-  .print-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    box-shadow: none;
-    border-radius: 0;
-    margin: 0;
-    padding: 0;
-  }
-  .no-print {
-    display: none;
+/* --- THIS IS THE FIX --- */
+/* This ensures all input, textarea, and select fields have a dark text color */
+@layer base {
+  input,
+  textarea,
+  select {
+    @apply text-slate-900;
   }
 }
-
-/* Custom animations for the new design */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeIn { animation: fadeIn 1s ease-out forwards; }
-.animate-fadeInUp { animation: fadeInUp 0.8s ease-out forwards; }
-.delay-200 { animation-delay: 200ms; }
-.delay-400 { animation-delay: 400ms; }
-.delay-600 { animation-delay: 600ms; }

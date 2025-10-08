@@ -3,17 +3,14 @@ import { getMyMessages, markMessageAsRead } from "../api/messageApi";
 import { useAuth } from "../context/AuthContext";
 import Loader from "../components/Loader";
 
-// --- Helper component for a styled action button ---
-const ActionButton = ({ icon, text }) => (
-    <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
-        {icon}
-        <span>{text}</span>
-    </button>
-);
+// --- Modern Icon Set ---
+const ReplyIcon = () => <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>;
+const DeleteIcon = () => <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+const SearchIcon = () => <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
 
 const Inbox = () => {
   const [messages, setMessages] = useState([]);
-  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [expandedMessageId, setExpandedMessageId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
@@ -33,26 +30,21 @@ const Inbox = () => {
     fetchMessages();
   }, []);
 
-  const handleSelectMessage = (message) => {
-    // Immediately update the state for the selected message to display its content
-    setSelectedMessage({ ...message, is_read: 1 });
+  const handleToggleMessage = (message) => {
+    const newExpandedId = expandedMessageId === message.id ? null : message.id;
+    setExpandedMessageId(newExpandedId);
 
-    // If the message was originally unread, update the list and notify the backend
-    if (!message.is_read) {
-      // Update the main message list to change the visual state (e.g., remove the 'unread' dot)
+    if (newExpandedId !== null && !message.is_read) {
       setMessages(prevMessages =>
         prevMessages.map(m =>
           m.id === message.id ? { ...m, is_read: 1 } : m
         )
       );
-
-      // Call the API in the background to persist the change without blocking the UI
       (async () => {
         try {
           await markMessageAsRead(message.id);
         } catch (error) {
           console.error("Failed to mark message as read on the server:", error);
-          // Optional: You could add logic here to revert the UI change if the API call fails
         }
       })();
     }
@@ -64,99 +56,80 @@ const Inbox = () => {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-2xl flex h-[calc(100vh-10rem)] overflow-hidden border border-slate-200">
-      
-      {/* --- Left Pane: Message List --- */}
-      <div className="w-full md:w-2/5 lg:w-1/3 border-r border-slate-200 flex flex-col bg-slate-50">
-        <div className="p-4 border-b border-slate-200 sticky top-0 bg-slate-50 z-10">
-          <h1 className="text-2xl font-bold text-slate-800 mb-4">Inbox</h1>
-          <input 
-            type="text"
-            placeholder="Search messages..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+    <div className="p-6 bg-gradient-to-br from-gray-50 to-slate-100 min-h-full font-sans">
+      <div className="max-w-3xl mx-auto">
+        <header className="text-center mb-8">
+            <h1 className="text-5xl font-extrabold text-slate-800 tracking-tight">Messages</h1>
+            <p className="text-slate-500 mt-2">You have {messages.filter(m => !m.is_read).length} unread messages.</p>
+        </header>
+        
+        <div className="relative mb-8">
+            <SearchIcon />
+            <input 
+              type="text"
+              placeholder="Search messages..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white border-2 border-transparent rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            />
         </div>
 
-        <div className="overflow-y-auto flex-1">
-          {loading ? (
-            <div className="flex h-full items-center justify-center"><Loader /></div>
-          ) : filteredMessages.length === 0 ? (
-            <div className="p-6 text-center text-slate-500 mt-10">
-              <p className="font-semibold">No messages found</p>
-              <p className="text-sm">Your inbox is empty or no messages match your search.</p>
-            </div>
-          ) : (
-            <ul>
-              {filteredMessages.map(msg => (
-                <li
-                  key={msg.id}
-                  onClick={() => handleSelectMessage(msg)}
-                  className={`p-4 cursor-pointer border-l-4 transition-all duration-200 ease-in-out relative ${
-                    selectedMessage?.id === msg.id 
-                    ? 'border-blue-600 bg-white shadow-inner' 
-                    : 'border-transparent hover:bg-slate-100'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                       {!msg.is_read && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-blue-500 rounded-full"></div>}
-                       <div className="w-10 h-10 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center text-white font-bold">
-                           {msg.sender_name.charAt(0).toUpperCase()}
-                       </div>
-                       <div className="flex-1 overflow-hidden">
-                           <p className={`font-semibold text-sm truncate ${!msg.is_read ? 'text-slate-900' : 'text-slate-600'}`}>
-                               {msg.sender_name}
-                           </p>
-                           <p className={`font-medium truncate text-sm mt-1 ${!msg.is_read ? 'text-slate-800' : 'text-slate-500'}`}>
-                               {msg.subject}
-                           </p>
-                       </div>
-                    </div>
-                    <span className="text-xs text-slate-400 flex-shrink-0 ml-2 mt-1">
-                      {new Date(msg.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-
-      {/* --- Right Pane: Message Content --- */}
-      <div className="hidden md:flex w-3/5 lg:w-2/3 p-6 lg:p-8 flex-col bg-white">
-        {selectedMessage ? (
-          <>
-            <div className="pb-4 border-b border-slate-200">
-              <h2 className="text-3xl font-bold text-slate-900">{selectedMessage.subject}</h2>
-              <div className="flex items-center mt-4">
-                <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold mr-4">
-                  {selectedMessage.sender_name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-800">{selectedMessage.sender_name}</p>
-                  <p className="text-sm text-slate-500">to: {user?.username} ({user?.email})</p>
-                </div>
-                <p className="ml-auto text-sm text-slate-500">{new Date(selectedMessage.created_at).toLocaleString()}</p>
-              </div>
-            </div>
-            <div className="mt-6 text-slate-700 text-base leading-relaxed whitespace-pre-wrap overflow-y-auto flex-1">
-              {selectedMessage.body}
-            </div>
-            <div className="mt-6 pt-4 border-t border-slate-200 flex gap-2">
-                <ActionButton icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>} text="Reply" />
-                <ActionButton icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>} text="Delete" />
-            </div>
-          </>
+        {loading ? (
+            <div className="flex h-64 items-center justify-center"><Loader /></div>
         ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center text-slate-400">
-              <svg className="mx-auto h-20 w-20 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-              <p className="mt-4 text-xl font-medium text-slate-500">Select a message to read</p>
-              <p className="text-slate-400">Your messages will be displayed here.</p>
-            </div>
+          <div className="relative pl-8">
+            {/* --- Timeline Axis --- */}
+            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200"></div>
+
+            {filteredMessages.length > 0 ? (
+              filteredMessages.map(msg => (
+                <div key={msg.id} className="relative mb-6">
+                  {/* --- Timeline Dot --- */}
+                  <div className={`absolute left-0 top-3 w-4 h-4 rounded-full transform -translate-x-1/2 -translate-y-1/2 ${!msg.is_read ? 'bg-indigo-500 ring-4 ring-white' : 'bg-slate-300'}`}></div>
+
+                  <div className="ml-8">
+                    <div 
+                      className="bg-white rounded-xl shadow-md border border-slate-200 p-4 cursor-pointer hover:shadow-lg hover:border-indigo-500 transition-all duration-300"
+                      onClick={() => handleToggleMessage(msg)}
+                    >
+                      <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white text-lg ${!msg.is_read ? 'bg-indigo-600' : 'bg-slate-700'}`}>
+                              {msg.sender_name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 overflow-hidden">
+                              <p className={`font-semibold truncate ${!msg.is_read ? 'text-slate-900' : 'text-slate-600'}`}>{msg.sender_name}</p>
+                              <p className={`truncate text-sm font-medium ${!msg.is_read ? 'text-slate-800' : 'text-slate-500'}`}>{msg.subject}</p>
+                          </div>
+                          <p className="text-sm text-slate-500 ml-4 flex-shrink-0">{new Date(msg.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+
+                    {/* --- Expanded Content --- */}
+                    {expandedMessageId === msg.id && (
+                       <div className="bg-white rounded-b-xl border-x border-b border-slate-200 p-6 -mt-1 shadow-md">
+                         <div className="text-slate-700 leading-relaxed whitespace-pre-wrap mb-6">
+                             {msg.body}
+                         </div>
+                         <div className="flex gap-3 pt-4 border-t border-slate-200">
+                            <button className="flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg">
+                               <ReplyIcon />
+                               <span>Reply</span>
+                           </button>
+                           <button className="flex items-center px-4 py-2 text-sm font-semibold text-red-700 bg-red-100 hover:bg-red-200 rounded-lg">
+                               <DeleteIcon />
+                               <span>Delete</span>
+                           </button>
+                         </div>
+                       </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="ml-8 text-center py-20 bg-white rounded-xl shadow-sm border border-slate-200">
+                  <p className="text-slate-500">No messages to display.</p>
+              </div>
+            )}
           </div>
         )}
       </div>
