@@ -28,6 +28,12 @@ export const changePassword = async (passwordData) => {
   return data;
 };
 
+// New function for sending referral invites
+export const sendReferralInviteApi = async (inviteData) => {
+    const { data } = await API.post("/users/send-referral", inviteData);
+    return data;
+};
+
 // --- Portal (Admin/Manager) Profile Actions ---
 export const uploadAvatar = async (formData) => {
   const { data } = await API.post("/users/profile/avatar", formData);

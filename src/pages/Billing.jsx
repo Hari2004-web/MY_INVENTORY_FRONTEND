@@ -32,21 +32,20 @@ const Billing = () => {
     fetchData();
   }, []);
 
+  // --- THIS IS THE FIX ---
+  // This function now re-fetches data after a successful update
+  // instead of relying on an optimistic UI update.
   const handleStatusChange = async (billId, newStatus) => {
-    const originalBills = [...bills];
-    // Optimistically update the UI for a responsive feel
-    setBills(bills.map(b => b.id === billId ? { ...b, status: newStatus } : b));
-
+    const loadingToast = toast.loading("Updating status...");
     try {
-      // The API call now returns a specific message
       const response = await updateBillStatus(billId, newStatus);
-      toast.success(response.message || "Status updated!"); // Use the response message
+      toast.success(response.message || "Status updated!", { id: loadingToast });
+      fetchData(); // Re-fetch all bills to ensure UI is in sync
     } catch (error) {
-      // Also use the specific error message from the backend
-      toast.error(error.response?.data?.message || "Failed to update status.");
-      setBills(originalBills); // Revert the UI change on error
+      toast.error(error.response?.data?.message || "Failed to update status.", { id: loadingToast });
     }
   };
+  // --- END OF FIX ---
 
   const filteredBills = bills.filter(bill =>
     bill.bill_no?.toLowerCase().includes(searchTerm.toLowerCase())

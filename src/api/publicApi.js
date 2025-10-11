@@ -28,3 +28,9 @@ export const getPublicProductById = async (id) => {
     const { data } = await publicApi.get(`/product/${id}`);
     return data;
 };
+
+// ---API for getting the offered products---
+export const getOfferedProducts = async () => {
+    const { data } = await publicApi.get('/products/offers');
+    return data;
+}   

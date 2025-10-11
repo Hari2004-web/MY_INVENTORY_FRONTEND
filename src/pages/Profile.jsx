@@ -1,3 +1,5 @@
+// src/pages/Profile.jsx
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { uploadAvatar, updateProfile } from '../api/userApi';
@@ -28,8 +30,16 @@ const Profile = () => {
       return;
     }
     const loadingToast = toast.loading('Uploading picture...');
+
+    // ** THIS IS THE FIX **
+    // 1. Create a new FormData object.
+    const formData = new FormData();
+    // 2. Append the file. The key 'avatar' must match the backend middleware.
+    formData.append('avatar', selectedFile); 
+
     try {
-      const response = await uploadAvatar(selectedFile);
+      // 3. Send the FormData object, not the raw file.
+      const response = await uploadAvatar(formData); 
       toast.success('Profile picture updated!', { id: loadingToast });
       updateUserInContext(response.data.user);
       setSelectedFile(null);
@@ -58,7 +68,7 @@ const Profile = () => {
   };
 
   const avatarSrc = user?.avatar_url 
-    ? `http://localhost:5000${user.avatar_url}` 
+    ? `http://localhost:5000${user.avatar_url}?${new Date().getTime()}` // Add a timestamp to prevent caching
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username)}&background=2563eb&color=fff&size=128`;
 
   return (

@@ -1,6 +1,4 @@
-// src/pages/shop/ProductList.jsx
-
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { getRecommendedProducts, getProductsByCategory } from "../../api/publicApi";
 import { useCart } from "../../context/CartContext";
@@ -9,8 +7,13 @@ import { useWishlist, useWishlistActions } from "../../context/WishlistContext";
 import { initiateCheckout } from "../../api/checkoutApi";
 import { createCodOrder, createWalletOrder } from "../../api/billingApi";
 import { getWalletDetails } from "../../api/walletApi";
+import { validateCoupon } from "../../api/couponApi.js";
 import PaymentMethodModal from "../../components/PaymentMethodModal";
 import toast from 'react-hot-toast';
+import Button from "../../components/Button";
+import { getBanners } from "../../api/bannerApi"; // Import banner API
+import Slider from "react-slick"; // Import Slider
+import ChatWidget from "../../components/ChatWidget"; // Import the new component
 
 // --- Icon Components ---
 const ArrowRightIcon = () => <svg className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>;
@@ -23,6 +26,58 @@ const HeartIcon = ({ isFilled }) => (
 const PlusIcon = () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>;
 const UserIcon = () => <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
 const SearchIcon = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+
+
+// --- Banner Slider Component ---
+const BannerSlider = () => {
+  const [banners, setBanners] = useState([]);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await getBanners();
+        setBanners(response.data || []);
+      } catch {
+        // Fail silently if banners can't be fetched
+      }
+    };
+    fetchBanners();
+  }, []);
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 4000,
+    pauseOnHover: true,
+  };
+  
+  if (banners.length === 0) return null;
+
+  return (
+    <div className="mb-16">
+      <Slider {...settings}>
+        {banners.map((banner) => (
+          <div key={banner.id}>
+            <Link to={banner.link || '#'}>
+              <div className="relative w-full h-[400px] bg-gray-800 rounded-3xl overflow-hidden shadow-2xl flex items-center justify-center p-8 text-white">
+                <img src={`http://localhost:5000${banner.image_url}`} alt={banner.title} className="absolute inset-0 w-full h-full object-cover opacity-50"/>
+                <div className="relative z-10 text-center max-w-2xl">
+                  <h2 className="text-5xl font-extrabold mb-4 drop-shadow-lg">{banner.title}</h2>
+                  {banner.subtitle && <p className="text-xl mb-8 font-light">{banner.subtitle}</p>}
+                </div>
+              </div>
+            </Link>
+          </div>
+        ))}
+      </Slider>
+    </div>
+  );
+};
+
 
 // --- Product Card Component ---
 const ProductCard = ({ product }) => {
@@ -90,11 +145,39 @@ const SkeletonCard = () => (
     </div>
 );
 
+
 // --- Cart Modal Component ---
 const CartModal = ({ isOpen, onClose, onCheckout }) => {
     const { cartItems, removeFromCart, updateQuantity } = useCart();
+    const [couponCode, setCouponCode] = useState("");
+    const [discount, setDiscount] = useState(0);
+
     if (!isOpen) return null;
-    const cartTotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    
+    let cartTotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    const discountedTotal = cartTotal - discount;
+
+    const applyCoupon = async () => {
+        try {
+            const response = await validateCoupon(couponCode);
+            
+            if (response.success && response.data) {
+                const coupon = response.data;
+                if (coupon.discount_type === 'percentage') {
+                    setDiscount((cartTotal * coupon.discount_value) / 100);
+                } else { // fixed_amount
+                    setDiscount(coupon.discount_value);
+                }
+                toast.success("Coupon applied successfully!");
+            } else {
+                setDiscount(0);
+                toast.error(response.message || "Invalid coupon code.");
+            }
+        } catch (error) {
+            setDiscount(0);
+            toast.error(error.response?.data?.message || "Invalid or expired coupon.");
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-end" onClick={onClose}>
@@ -125,12 +208,18 @@ const CartModal = ({ isOpen, onClose, onCheckout }) => {
                     </div>
                 )}
                 <div className="p-6 border-t border-gray-100 bg-gray-50">
+                    <div className="flex gap-2 mb-4">
+                        <input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder="Enter coupon code" className="w-full p-2 border rounded-lg" />
+                        <Button onClick={applyCoupon}>Apply</Button>
+                    </div>
+                    {discount > 0 && <p className="text-green-600 text-center mb-4">Discount Applied: -₹{discount.toFixed(2)}</p>}
+
                     <div className="flex justify-between font-bold text-2xl mb-5 text-[#0A3816]">
                         <span>Total:</span>
-                        <span>₹{cartTotal.toFixed(2)}</span>
+                        <span>₹{discountedTotal.toFixed(2)}</span>
                     </div>
                     <button
-                        onClick={onCheckout}
+                        onClick={() => onCheckout(couponCode)}
                         className="w-full py-4 bg-[#0A3816] text-white font-bold rounded-lg shadow-lg hover:bg-[#1A5021] transition-all duration-300 text-xl disabled:bg-gray-400"
                         disabled={cartItems.length === 0}
                     >
@@ -154,6 +243,7 @@ const ProductList = () => {
     const [activeCategory, setActiveCategory] = useState('Recommended');
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState('recommended');
+    const [couponCode, setCouponCode] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -168,6 +258,7 @@ const ProductList = () => {
                     setWalletBalance(parseFloat(walletRes.data.balance) || 0);
                 }
             } catch (error) {
+                console.error("Failed to fetch initial data:", error);
                 toast.error("Could not fetch initial page data.");
             } finally {
                 setLoading(false);
@@ -186,7 +277,7 @@ const ProductList = () => {
                 ? await getRecommendedProducts()
                 : await getProductsByCategory(categoryValue);
             setProducts(response.data || []);
-        } catch (error) {
+        } catch {
             toast.error("Could not fetch products.");
         } finally {
             setTimeout(() => setLoading(false), 500);
@@ -201,6 +292,7 @@ const ProductList = () => {
             products: cartItems.map(({ id, name, quantity, price }) => ({ id, name, quantity, price })),
             total_amount: totalAmount,
             gst_amount: gstAmount,
+            coupon_code: couponCode,
         };
     };
 
@@ -255,8 +347,9 @@ const ProductList = () => {
         }
     };
 
-    const handleCheckout = () => {
+    const handleCheckout = (coupon) => {
         if (user) {
+            setCouponCode(coupon);
             setIsCartOpen(false);
             setIsPaymentModalOpen(true);
         } else {
@@ -280,7 +373,7 @@ const ProductList = () => {
     ];
 
     const displayedProducts = useMemo(() => {
-        let filtered = products.filter(p => p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        let filtered = products.filter(p => p && p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
         let sorted = [...filtered];
 
         switch (sortOption) {
@@ -296,6 +389,7 @@ const ProductList = () => {
 
     return (
         <div className="bg-gradient-to-br from-[#F8F4E3] to-gray-50 text-gray-800 font-sans min-h-screen">
+            <ChatWidget />
             <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} onCheckout={handleCheckout} />
             
             <PaymentMethodModal
@@ -351,16 +445,7 @@ const ProductList = () => {
             </header>
 
             <main className="container mx-auto px-6 py-10">
-                <div className="relative w-full h-[400px] bg-gradient-to-r from-[#0A3816] to-[#1A5021] rounded-3xl overflow-hidden shadow-2xl mb-16 flex items-center justify-center p-8">
-                    <img src="https://images.unsplash.com/photo-1542291026-79eddc756ec3?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Exclusive Collection" className="absolute inset-0 w-full h-full object-cover opacity-30"/>
-                    <div className="relative z-10 text-white text-center max-w-2xl">
-                        <h2 className="text-6xl font-extrabold mb-4 drop-shadow-lg leading-tight">NEXUS Exclusive!</h2>
-                        <p className="text-xl mb-8 font-light leading-relaxed">Discover our curated collection of cutting-edge electronics and accessories, handpicked for you.</p>
-                        <a href="#products" className="inline-flex items-center px-8 py-4 bg-[#FFE812] text-[#0A3816] font-bold rounded-full shadow-lg hover:scale-105 transition-all duration-300 text-lg">
-                            Shop Now <ArrowRightIcon />
-                        </a>
-                    </div>
-                </div>
+                <BannerSlider />
 
                 <h2 id="products" className="text-5xl font-extrabold text-center text-[#0A3816] mb-12">Our Latest Collection</h2>
                 

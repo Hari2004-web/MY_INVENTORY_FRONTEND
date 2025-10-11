@@ -1,7 +1,8 @@
 // src/App.jsx
 
 import React, { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
+// FIX: Remove BrowserRouter as Router from this import
+import { Routes, Route, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
@@ -13,6 +14,9 @@ import ManagerLayout from "./layouts/ManagerLayout";
 import BillingManagerLayout from "./layouts/BillingManagerLayout";
 import Loader from "./components/Loader";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CustomerProtectedRoute from "./components/CustomerProtectedRoute"; 
+const Error = lazy(() => import("./pages/Error.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 const Login = lazy(() => import("./pages/Auth/Login.jsx"));
 const Register = lazy(() => import("./pages/Auth/register.jsx"));
@@ -34,7 +38,7 @@ const Billing = lazy(() => import("./pages/Billing.jsx"));
 const BillDetails = lazy(() => import("./pages/BillDetails.jsx"));
 const ProductDetails = lazy(() => import("./pages/ProductDetails.jsx"));
 const Customers = lazy(() => import("./pages/Customers.jsx"));
-const CustomerDetails = lazy(() => import("./components/CustomerDetails.jsx"));
+const AdminCustomerView = lazy(() => import("./pages/AdminCustomerView.jsx"));
 const Wishlist = lazy(() => import("./pages/shop/Wishlist.jsx"));
 const ShopProductDetail = lazy(() => import("./pages/shop/ShopProductDetail.jsx"));
 const CustomerLogin = lazy(() => import("./pages/shop/CustomerLogin.jsx"));
@@ -48,8 +52,16 @@ const PrivacyPolicy = lazy(() => import("./pages/shop/PrivacyPolicy.jsx"));
 const CustomerProfile = lazy(() => import("./pages/shop/CustomerProfile.jsx"));
 const Wallet = lazy(() => import("./pages/shop/Wallet.jsx"));
 const OrderSuccess = lazy(() => import("./pages/shop/OrderSuccess.jsx"));
-// --- 1. IMPORT THE NEW TRACKING PAGE ---
 const OrderTracking = lazy(() => import("./pages/shop/OrderTracking.jsx"));
+const Coupons = lazy(() => import("./pages/Coupons.jsx"));
+const GiftCards = lazy(() => import("./pages/shop/GiftCards.jsx"));
+const Banners = lazy(() => import("./pages/Banners.jsx"));
+const Offers = lazy(() => import("./pages/shop/Offers.jsx"));
+const LiveChat = lazy(() => import("./pages/LiveChat.jsx"));
+const ReturnOrder = lazy(() => import("./pages/shop/ReturnOrder.jsx"));
+const Returns = lazy(() => import("./pages/Returns.jsx"));
+const MyReturns = lazy(() => import("./pages/shop/MyReturns.jsx"));
+
 
 
 // --- Role-Based Layout Logic ---
@@ -85,59 +97,73 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <Router>
-          <WishlistProvider>
-            <Toaster position="bottom-right" reverseOrder={false} />
-            <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><Loader /></div>}>
-              <Routes>
-                {/* --- PUBLIC SHOP & AUTH ROUTES --- */}
-                <Route path="/" element={<ProductList />} />
+        {/* FIX: Remove <Router> from here */}
+        <WishlistProvider>
+          <Toaster position="bottom-right" reverseOrder={false} />
+          <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><Loader /></div>}>
+            <Routes>
+              {/* --- PUBLIC SHOP ROUTES --- */}
+              <Route path="/" element={<ProductList />} />
+              <Route path="/offers" element={<Offers />} />
+              <Route path="/shop/product/:id" element={<ShopProductDetail />} />
+              <Route path="/customer/login" element={<CustomerLogin />} />
+              <Route path="/customer/register" element={<CustomerRegister />} />
+
+              {/* --- STATIC PAGES --- */}
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/faq" element={<Faq />} />
+              <Route path="/shipping" element={<ShippingReturns />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+
+              {/* ** PROTECTED CUSTOMER ROUTES ARE GROUPED HERE ** */}
+              <Route element={<CustomerProtectedRoute />}>
                 <Route path="/order/success" element={<OrderSuccess />} />
-                <Route path="/shop/product/:id" element={<ShopProductDetail />} />
-                <Route path="/customer/login" element={<CustomerLogin />} />
-                <Route path="/customer/register" element={<CustomerRegister />} />
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/customer/profile" element={<CustomerProfile />} />
                 <Route path="/wallet" element={<Wallet />} />
-                {/* --- 2. ADD THE ROUTE FOR THE TRACKING PAGE --- */}
+                <Route path="/gift-cards" element={<GiftCards />} />
                 <Route path="/track-order/:id" element={<OrderTracking />} />
+                <Route path="/return-order/:id" element={<ReturnOrder />} />
+                <Route path="/my-returns" element={<MyReturns />} />
+              </Route>
 
-                {/* --- STATIC PAGES --- */}
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/faq" element={<Faq />} />
-                <Route path="/shipping" element={<ShippingReturns />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
+              {/* --- PUBLIC PORTAL AUTH ROUTES --- */}
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-otp" element={<VerifyOtp />} />
+              <Route path="/set-password/:token" element={<SetPassword />} />
 
-                {/* --- PUBLIC PORTAL AUTH ROUTES --- */}
-                <Route path="/auth/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/verify-otp" element={<VerifyOtp />} />
-                <Route path="/set-password/:token" element={<SetPassword />} />
+              {/* --- PROTECTED ADMIN/MANAGER ROUTES --- */}
+              <Route element={<ProtectedRoute><RoleBasedLayout /></ProtectedRoute>}>
+              <Route path="/live-chat" element={<LiveChat />} />
+                <Route path="dashboard" element={<RoleBasedDashboard />} />
+                <Route path="products" element={<Products />} />
+                <Route path="products/add" element={<AddProduct />} />
+                <Route path="products/:id" element={<ProductDetails />} />
+                <Route path="products/edit/:id" element={<EditProduct />} />
+                <Route path="stocks" element={<Stocks />} />
+                <Route path="inbox" element={<Inbox />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="change-password" element={<ChangePassword />} />
+                <Route path="managers" element={<Managers />} />
+                <Route path="customers" element={<Customers />} />
+                <Route path="customers/:id" element={<AdminCustomerView />} />
+                <Route path="billing" element={<Billing />} />
+                <Route path="bill/:id" element={<BillDetails />} />
+                <Route path="coupons" element={<Coupons />} />
+                <Route path="banners" element={<Banners />} />
+                <Route path="returns" element={<Returns />} />
+              </Route>
 
-                {/* --- PROTECTED ROUTES --- */}
-                <Route element={<ProtectedRoute><RoleBasedLayout /></ProtectedRoute>}>
-                  <Route path="dashboard" element={<RoleBasedDashboard />} />
-                  <Route path="products" element={<Products />} />
-                  <Route path="products/add" element={<AddProduct />} />
-                  <Route path="products/:id" element={<ProductDetails />} />
-                  <Route path="products/edit/:id" element={<EditProduct />} />
-                  <Route path="stocks" element={<Stocks />} />
-                  <Route path="inbox" element={<Inbox />} />
-                  <Route path="profile" element={<Profile />} />
-                  <Route path="change-password" element={<ChangePassword />} />
-                  <Route path="managers" element={<Managers />} />
-                  <Route path="customers" element={<Customers />} />
-                  <Route path="customers/:id" element={<CustomerDetails />} />
-                  <Route path="billing" element={<Billing />} />
-                  <Route path="bill/:id" element={<BillDetails />} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </WishlistProvider>
-        </Router>
+              {/* Catch-all route for 404 Not Found */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </WishlistProvider>
+        {/* FIX: Remove closing </Router> tag */}
       </CartProvider>
     </AuthProvider>
   );

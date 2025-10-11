@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { getMyOrders } from "../../api/userApi";
+import { getMyOrders, getCustomerProfile as getCustomerProfileApi, sendReferralInviteApi } from "../../api/userApi";
 import Loader from "../../components/Loader";
 import toast from 'react-hot-toast';
 import CustomerDetails from "../../components/CustomerDetails";
@@ -19,15 +19,79 @@ const StatusBadge = ({ status }) => {
     cancelled: 'bg-red-100 text-red-800',
     default: 'bg-gray-100 text-gray-800',
   };
-
   const style = statusStyles[status] || statusStyles.default;
   const statusText = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown';
-
   return (
     <span className={`px-3 py-1 text-xs font-semibold rounded-full ${style}`}>
       {statusText}
     </span>
   );
+};
+
+// --- New Referral Component ---
+const ReferralSection = () => {
+    const [profile, setProfile] = useState(null);
+    const [recipientEmail, setRecipientEmail] = useState('');
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+          try {
+            const response = await getCustomerProfileApi();
+            setProfile(response.data);
+          } catch (error) {
+            console.error("Could not fetch profile for referral.", error);
+          }
+        };
+        fetchProfile();
+    }, []);
+
+    const handleSendInvite = async (e) => {
+        e.preventDefault();
+        const loadingToast = toast.loading("Sending invite...");
+        try {
+            await sendReferralInviteApi({ recipientEmail, message });
+            toast.success("Invitation sent!", { id: loadingToast });
+            setRecipientEmail('');
+            setMessage('');
+        } catch (error) {
+            console.error("Failed to send referral invite:", error);
+            // =========================================================================
+            // == THIS IS THE FIX: It now shows the specific error from the backend   ==
+            // =========================================================================
+            toast.error(error.response?.data?.error || "Failed to send invite.", { id: loadingToast });
+        }
+    };
+
+    if (!profile) return null;
+
+    return (
+        <div className="bg-white shadow-xl rounded-2xl p-6 sm:p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Refer a Friend</h2>
+            <div className="text-center bg-gray-100 p-4 rounded-lg mb-6">
+                <p className="text-gray-600">Your Unique Referral Code</p>
+                <p className="text-2xl font-bold text-indigo-600 tracking-widest">{profile.referral_code}</p>
+            </div>
+            <form onSubmit={handleSendInvite} className="space-y-4">
+                <input
+                    type="email"
+                    placeholder="Friend's Email Address"
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                    required
+                />
+                <textarea
+                    rows="3"
+                    placeholder="Add an optional message..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                ></textarea>
+                <Button type="submit" className="w-full">Send Invite</Button>
+            </form>
+        </div>
+    );
 };
 
 
@@ -84,12 +148,20 @@ const CustomerProfile = () => {
         
         <CustomerDetails />
         
-        {/* --- NEW LINK TO WALLET PAGE --- */}
-        <div className="text-center">
+        <div className="text-center flex flex-wrap justify-center gap-4">
             <Link to="/wallet" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg shadow-md hover:bg-gray-50 transition-colors">
                 View My Wallet
             </Link>
+            <Link to="/gift-cards" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg shadow-md hover:bg-gray-50 transition-colors">
+                My Vouchers
+            </Link>
+            <Link to="/my-returns" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-md hover:bg-gray-50 transition-colors">
+                My Returns
+            </Link>
         </div>
+
+        {/* New Referral Section */}
+        <ReferralSection />
 
         <div className="bg-white shadow-2xl rounded-2xl overflow-hidden p-6 sm:p-8">
           <div className="flex justify-between items-center mb-6 border-b pb-4">

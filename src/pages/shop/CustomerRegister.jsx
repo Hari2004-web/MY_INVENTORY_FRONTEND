@@ -1,12 +1,23 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+// src/pages/shop/CustomerRegister.jsx
+
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { customerRegisterApi } from "../../api/customerAuthApi";
 import toast from 'react-hot-toast';
 
 const CustomerRegister = () => {
-  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', referralCode: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Pre-fill referral code if it's in the URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setFormData(prev => ({ ...prev, referralCode: refCode }));
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -61,6 +72,15 @@ const CustomerRegister = () => {
             onChange={handleChange}
             autoComplete="new-password"
             required
+          />
+          {/* New Referral Code Field */}
+          <input
+            type="text"
+            name="referralCode"
+            placeholder="Referral Code (Optional)"
+            className="w-full px-4 py-3 text-white bg-gray-800 border border-gray-700 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={formData.referralCode}
+            onChange={handleChange}
           />
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
           <button type="submit" className="w-full py-3 mt-4 bg-[#007CF0] text-white font-bold rounded-lg hover:bg-blue-600 transition-colors">

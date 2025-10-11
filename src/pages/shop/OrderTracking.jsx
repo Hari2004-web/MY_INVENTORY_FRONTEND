@@ -1,7 +1,5 @@
-// src/pages/shop/OrderTracking.jsx
-
-import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { getBillById, cancelMyOrder } from '../../api/billingApi';
 import { useAuth } from '../../context/AuthContext';
 import { generateInvoicePdf } from '../../utils/pdfGenerator';
@@ -54,25 +52,37 @@ const OrderTracker = ({ status }) => {
 const OrderTracking = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isReturnable, setIsReturnable] = useState(false);
 
-  const fetchBill = async () => {
+  // FIX 1: Wrap fetchBill in useCallback
+  const fetchBill = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getBillById(id);
-      setBill(response.data);
-    } catch (err) {
+      const billData = response.data;
+      setBill(billData);
+
+      if (billData && billData.status === 'delivered' && billData.delivered_at) {
+        const deliveredDate = new Date(billData.delivered_at);
+        const currentDate = new Date();
+        const daysSinceDelivery = (currentDate - deliveredDate) / (1000 * 60 * 60 * 24);
+        if (daysSinceDelivery <= 7) {
+            setIsReturnable(true);
+        }
+      }
+    } catch { // FIX 2: Removed unused 'err' variable
       toast.error("Could not load order details.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]); // useCallback depends on 'id'
 
+  // FIX 3: Add fetchBill to the dependency array
   useEffect(() => {
     fetchBill();
-  }, [id]);
+  }, [fetchBill]);
 
   const handleCancelOrder = async () => {
     if (window.confirm("Are you sure you want to cancel this order?")) {
@@ -80,7 +90,7 @@ const OrderTracking = () => {
       try {
         const response = await cancelMyOrder(id);
         toast.success(response.message, { id: loadingToast });
-        fetchBill(); // Re-fetch the bill to show the updated 'cancelled' status
+        fetchBill();
       } catch (error) {
         toast.error(error.response?.data?.message || "Cancellation failed.", { id: loadingToast });
       }
@@ -130,7 +140,6 @@ const OrderTracking = () => {
             </button>
           </div>
           
-          {/* --- THIS IS WHERE THE TRACKER IS RENDERED --- */}
           <OrderTracker status={bill.status} />
           
           <div className="space-y-4 max-h-80 overflow-y-auto pr-2 mt-8 border-t pt-8">
@@ -146,16 +155,23 @@ const OrderTracking = () => {
             ))}
           </div>
 
-          {isCancellable && (
-            <div className="mt-8 pt-6 border-t flex justify-end">
-              <button 
-                onClick={handleCancelOrder}
-                className="px-6 py-2.5 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition"
-              >
-                Cancel Order
-              </button>
-            </div>
-          )}
+          <div className="mt-8 pt-6 border-t flex justify-end gap-4">
+            {isCancellable && (
+                <button 
+                    onClick={handleCancelOrder}
+                    className="px-6 py-2.5 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition"
+                >
+                    Cancel Order
+                </button>
+            )}
+            {isReturnable && (
+                <Link to={`/return-order/${id}`}>
+                    <button className="px-6 py-2.5 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition">
+                        Request Return
+                    </button>
+                </Link>
+            )}
+          </div>
         </div>
       </div>
     </div>
